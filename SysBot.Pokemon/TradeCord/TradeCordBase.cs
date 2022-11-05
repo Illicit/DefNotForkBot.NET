@@ -361,12 +361,15 @@ namespace SysBot.Pokemon
             TCDex dex = new();
             if (reader.Read())
             {
-                var dexEntries = reader["entries"].ToString().Split(',');
+                var dexEntries = reader["entries"].ToString().Replace(" ", "").Split(',');
                 var count = (int)reader["dex_count"];
                 if (dexEntries[0] != "")
                 {
                     for (int i = 0; i < dexEntries.Length; i++)
-                        dex.Entries.Add(ushort.Parse(dexEntries[i]));
+                    {
+                        if (dexEntries[i] is not "-1")
+                            dex.Entries.Add(ushort.Parse(dexEntries[i]));
+                    }
                 }
                 dex.DexCompletionCount = count;
             }
