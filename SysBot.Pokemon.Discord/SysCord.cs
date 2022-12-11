@@ -56,6 +56,7 @@ namespace SysBot.Pokemon.Discord
                 // you must set the MessageCacheSize. You may adjust the number as needed.
                 MessageCacheSize = 100,
                 AlwaysDownloadUsers = true,
+                GatewayIntents = GatewayIntents.All,
             });
 
             _commands = new CommandService(new CommandServiceConfig
