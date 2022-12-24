@@ -876,7 +876,32 @@ namespace SysBot.Pokemon
                 return PokeTradeResult.TrainerTooSlow;
             }
 
-            bool different = TradeExtensions<PA8>.SameFamily(dumps);
+            ushort[] multiExceptions = new ushort[]
+            {
+                (ushort)Species.Bidoof, (ushort)Species.Eevee,
+                (ushort)Species.Combee,
+                (ushort)Species.Qwilfish,
+                (ushort)Species.Abra, (ushort)Species.Kadabra,
+                (ushort)Species.Basculin,
+                (ushort)Species.Magikarp, (ushort)Species.Gyarados,
+                (ushort)Species.Shellos, (ushort)Species.Gastrodon,
+                (ushort)Species.Ralts, (ushort)Species.Budew, (ushort)Species.Roselia,
+                (ushort)Species.Hippopotas, (ushort)Species.Hippowdon,
+                (ushort)Species.Aipom,
+                (ushort)Species.Pikachu, (ushort)Species.Pichu, (ushort)Species.Kricketot,
+                (ushort)Species.Psyduck, (ushort)Species.Buneary,
+                (ushort)Species.Petilil, (ushort)Species.Gastly, (ushort)Species.Haunter,
+                (ushort)Species.Glameow, (ushort)Species.Purugly,
+                (ushort)Species.Teddiursa, (ushort)Species.Ursaring,
+                (ushort)Species.Beautifly, (ushort)Species.Dustox, (ushort)Species.Mothim,
+                (ushort)Species.Murkrow,
+                (ushort)Species.Swinub, (ushort)Species.Piloswine,
+                (ushort)Species.Paras, (ushort)Species.Parasect, (ushort)Species.Zubat, (ushort)Species.Golbat,
+                (ushort)Species.Rufflet,
+            };
+
+            bool isMulti = multiExceptions.Intersect(dumps.Select(x => x.Species)).ToArray().Length == dumps.Count;
+            bool different = TradeExtensions<PA8>.SameFamily(dumps) && !isMulti;
             if (different)
             {
                 var msg = "Shown Pokémon are not of the same family. Please show Pokémon that were caught in an MO or MMO.";
