@@ -395,7 +395,7 @@ namespace SysBot.Pokemon
             return formString[form].Contains("-") ? formString[form] : formString[form] == "" ? "" : $"-{formString[form]}";
         }
 
-        public static bool SameFamily(IReadOnlyList<T> pkms)
+        public static bool DifferentFamily(IReadOnlyList<T> pkms)
         {
             var criteriaList = new List<EvoCriteria>();
             for (int i = 0; i < pkms.Count; i++)

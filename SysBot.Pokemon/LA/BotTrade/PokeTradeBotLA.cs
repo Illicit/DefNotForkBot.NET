@@ -900,11 +900,11 @@ namespace SysBot.Pokemon
                 (ushort)Species.Rufflet,
             };
 
-            bool isMulti = multiExceptions.Intersect(dumps.Select(x => x.Species)).ToArray().Length == dumps.Count;
-            bool different = TradeExtensions<PA8>.SameFamily(dumps) && !isMulti;
+            bool isMulti = multiExceptions.Intersect(dumps.Select(x => x.Species)).ToArray().Length >= 1 && dumps.All(x => multiExceptions.Contains(x.Species));
+            bool different = TradeExtensions<PA8>.DifferentFamily(dumps) && !isMulti;
             if (different)
             {
-                var msg = "Shown Pokémon are not of the same family. Please show Pokémon that were caught in an MO or MMO.";
+                var msg = "Shown Pokémon are not of the same family and do not belong in currently supported multi spawners. Please show Pokémon that were caught in an MO, MMO, or multi spawner.";
                 detail.Notifier.SendIncompleteEtumrepEmbed(this, detail, msg, dumps);
                 return PokeTradeResult.TrainerTooSlow;
             }
