@@ -307,11 +307,11 @@ namespace SysBot.Pokemon
             return pkm;
         }
 
-        public static T CherishHandler(MysteryGift mg, ITrainerInfo info, int format)
+        public static T CherishHandler(MysteryGift mg, ITrainerInfo info)
         {
             var result = EntityConverterResult.None;
             var mgPkm = mg.ConvertToPKM(info);
-            bool canConvert = EntityConverter.IsConvertibleToFormat(mgPkm, format);
+            bool canConvert = EntityConverter.IsConvertibleToFormat(mgPkm, info.Generation);
             mgPkm = canConvert ? EntityConverter.ConvertToType(mgPkm, typeof(T), out result) : mgPkm;
 
             if (mgPkm is not null && result is EntityConverterResult.Success)
