@@ -64,9 +64,10 @@ namespace SysBot.Pokemon.WinForms
             this.TC_Main.Controls.Add(this.Tab_Results);
             this.TC_Main.Dock = System.Windows.Forms.DockStyle.Fill;
             this.TC_Main.Location = new System.Drawing.Point(0, 0);
+            this.TC_Main.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.TC_Main.Name = "TC_Main";
             this.TC_Main.SelectedIndex = 0;
-            this.TC_Main.Size = new System.Drawing.Size(457, 309);
+            this.TC_Main.Size = new System.Drawing.Size(834, 511);
             this.TC_Main.TabIndex = 3;
             // 
             // Tab_Bots
@@ -77,9 +78,10 @@ namespace SysBot.Pokemon.WinForms
             this.Tab_Bots.Controls.Add(this.CB_Routine);
             this.Tab_Bots.Controls.Add(this.NUD_Port);
             this.Tab_Bots.Controls.Add(this.B_New);
-            this.Tab_Bots.Location = new System.Drawing.Point(4, 22);
+            this.Tab_Bots.Location = new System.Drawing.Point(4, 24);
+            this.Tab_Bots.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Tab_Bots.Name = "Tab_Bots";
-            this.Tab_Bots.Size = new System.Drawing.Size(449, 283);
+            this.Tab_Bots.Size = new System.Drawing.Size(826, 483);
             this.Tab_Bots.TabIndex = 0;
             this.Tab_Bots.Text = "Bots";
             this.Tab_Bots.UseVisualStyleBackColor = true;
@@ -88,31 +90,33 @@ namespace SysBot.Pokemon.WinForms
             // 
             this.CB_Protocol.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.CB_Protocol.FormattingEnabled = true;
-            this.CB_Protocol.Location = new System.Drawing.Point(248, 5);
+            this.CB_Protocol.Location = new System.Drawing.Point(289, 6);
+            this.CB_Protocol.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.CB_Protocol.Name = "CB_Protocol";
-            this.CB_Protocol.Size = new System.Drawing.Size(58, 21);
+            this.CB_Protocol.Size = new System.Drawing.Size(67, 23);
             this.CB_Protocol.TabIndex = 10;
             this.CB_Protocol.SelectedIndexChanged += new System.EventHandler(this.CB_Protocol_SelectedIndexChanged);
             // 
             // FLP_Bots
             // 
-            this.FLP_Bots.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.FLP_Bots.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.FLP_Bots.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.FLP_Bots.Location = new System.Drawing.Point(0, 32);
+            this.FLP_Bots.Location = new System.Drawing.Point(0, 37);
             this.FLP_Bots.Margin = new System.Windows.Forms.Padding(0);
             this.FLP_Bots.Name = "FLP_Bots";
-            this.FLP_Bots.Size = new System.Drawing.Size(449, 251);
+            this.FLP_Bots.Size = new System.Drawing.Size(825, 443);
             this.FLP_Bots.TabIndex = 9;
             this.FLP_Bots.Resize += new System.EventHandler(this.FLP_Bots_Resize);
             // 
             // TB_IP
             // 
-            this.TB_IP.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.TB_IP.Location = new System.Drawing.Point(63, 6);
+            this.TB_IP.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.TB_IP.Location = new System.Drawing.Point(74, 7);
+            this.TB_IP.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.TB_IP.Name = "TB_IP";
-            this.TB_IP.Size = new System.Drawing.Size(115, 20);
+            this.TB_IP.Size = new System.Drawing.Size(134, 20);
             this.TB_IP.TabIndex = 8;
             this.TB_IP.Text = "192.168.0.1";
             // 
@@ -120,22 +124,24 @@ namespace SysBot.Pokemon.WinForms
             // 
             this.CB_Routine.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.CB_Routine.FormattingEnabled = true;
-            this.CB_Routine.Location = new System.Drawing.Point(312, 5);
+            this.CB_Routine.Location = new System.Drawing.Point(364, 6);
+            this.CB_Routine.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.CB_Routine.Name = "CB_Routine";
-            this.CB_Routine.Size = new System.Drawing.Size(101, 21);
+            this.CB_Routine.Size = new System.Drawing.Size(117, 23);
             this.CB_Routine.TabIndex = 7;
             // 
             // NUD_Port
             // 
-            this.NUD_Port.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.NUD_Port.Location = new System.Drawing.Point(184, 6);
+            this.NUD_Port.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.NUD_Port.Location = new System.Drawing.Point(215, 7);
+            this.NUD_Port.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.NUD_Port.Maximum = new decimal(new int[] {
             65535,
             0,
             0,
             0});
             this.NUD_Port.Name = "NUD_Port";
-            this.NUD_Port.Size = new System.Drawing.Size(58, 20);
+            this.NUD_Port.Size = new System.Drawing.Size(68, 20);
             this.NUD_Port.TabIndex = 6;
             this.NUD_Port.Value = new decimal(new int[] {
             6000,
@@ -145,9 +151,10 @@ namespace SysBot.Pokemon.WinForms
             // 
             // B_New
             // 
-            this.B_New.Location = new System.Drawing.Point(3, 6);
+            this.B_New.Location = new System.Drawing.Point(4, 7);
+            this.B_New.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.B_New.Name = "B_New";
-            this.B_New.Size = new System.Drawing.Size(54, 20);
+            this.B_New.Size = new System.Drawing.Size(63, 23);
             this.B_New.TabIndex = 0;
             this.B_New.Text = "Add";
             this.B_New.UseVisualStyleBackColor = true;
@@ -156,10 +163,11 @@ namespace SysBot.Pokemon.WinForms
             // Tab_Hub
             // 
             this.Tab_Hub.Controls.Add(this.PG_Hub);
-            this.Tab_Hub.Location = new System.Drawing.Point(4, 22);
+            this.Tab_Hub.Location = new System.Drawing.Point(4, 24);
+            this.Tab_Hub.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Tab_Hub.Name = "Tab_Hub";
-            this.Tab_Hub.Padding = new System.Windows.Forms.Padding(3);
-            this.Tab_Hub.Size = new System.Drawing.Size(449, 283);
+            this.Tab_Hub.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.Tab_Hub.Size = new System.Drawing.Size(525, 329);
             this.Tab_Hub.TabIndex = 2;
             this.Tab_Hub.Text = "Hub";
             this.Tab_Hub.UseVisualStyleBackColor = true;
@@ -167,18 +175,20 @@ namespace SysBot.Pokemon.WinForms
             // PG_Hub
             // 
             this.PG_Hub.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.PG_Hub.Location = new System.Drawing.Point(3, 3);
+            this.PG_Hub.Location = new System.Drawing.Point(4, 3);
+            this.PG_Hub.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.PG_Hub.Name = "PG_Hub";
             this.PG_Hub.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.PG_Hub.Size = new System.Drawing.Size(443, 277);
+            this.PG_Hub.Size = new System.Drawing.Size(517, 323);
             this.PG_Hub.TabIndex = 0;
             // 
             // Tab_Logs
             // 
             this.Tab_Logs.Controls.Add(this.RTB_Logs);
-            this.Tab_Logs.Location = new System.Drawing.Point(4, 22);
+            this.Tab_Logs.Location = new System.Drawing.Point(4, 24);
+            this.Tab_Logs.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Tab_Logs.Name = "Tab_Logs";
-            this.Tab_Logs.Size = new System.Drawing.Size(449, 283);
+            this.Tab_Logs.Size = new System.Drawing.Size(525, 329);
             this.Tab_Logs.TabIndex = 1;
             this.Tab_Logs.Text = "Logs";
             this.Tab_Logs.UseVisualStyleBackColor = true;
@@ -187,9 +197,10 @@ namespace SysBot.Pokemon.WinForms
             // 
             this.RTB_Logs.Dock = System.Windows.Forms.DockStyle.Fill;
             this.RTB_Logs.Location = new System.Drawing.Point(0, 0);
+            this.RTB_Logs.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.RTB_Logs.Name = "RTB_Logs";
             this.RTB_Logs.ReadOnly = true;
-            this.RTB_Logs.Size = new System.Drawing.Size(449, 283);
+            this.RTB_Logs.Size = new System.Drawing.Size(525, 329);
             this.RTB_Logs.TabIndex = 0;
             this.RTB_Logs.Text = "";
             // 
@@ -198,19 +209,21 @@ namespace SysBot.Pokemon.WinForms
             this.Tab_Results.Controls.Add(this.TossButton);
             this.Tab_Results.Controls.Add(this.ContinueButton);
             this.Tab_Results.Controls.Add(this.RTB_Results);
-            this.Tab_Results.Location = new System.Drawing.Point(4, 22);
+            this.Tab_Results.Location = new System.Drawing.Point(4, 24);
+            this.Tab_Results.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Tab_Results.Name = "Tab_Results";
-            this.Tab_Results.Padding = new System.Windows.Forms.Padding(3);
-            this.Tab_Results.Size = new System.Drawing.Size(449, 283);
+            this.Tab_Results.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.Tab_Results.Size = new System.Drawing.Size(525, 329);
             this.Tab_Results.TabIndex = 3;
             this.Tab_Results.Text = "Results";
             this.Tab_Results.UseVisualStyleBackColor = true;
             // 
             // TossButton
             // 
-            this.TossButton.Location = new System.Drawing.Point(3, 7);
+            this.TossButton.Location = new System.Drawing.Point(4, 8);
+            this.TossButton.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.TossButton.Name = "TossButton";
-            this.TossButton.Size = new System.Drawing.Size(75, 23);
+            this.TossButton.Size = new System.Drawing.Size(88, 27);
             this.TossButton.TabIndex = 4;
             this.TossButton.Text = "Toss";
             this.TossButton.UseVisualStyleBackColor = true;
@@ -218,9 +231,10 @@ namespace SysBot.Pokemon.WinForms
             // 
             // ContinueButton
             // 
-            this.ContinueButton.Location = new System.Drawing.Point(81, 7);
+            this.ContinueButton.Location = new System.Drawing.Point(94, 8);
+            this.ContinueButton.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.ContinueButton.Name = "ContinueButton";
-            this.ContinueButton.Size = new System.Drawing.Size(75, 23);
+            this.ContinueButton.Size = new System.Drawing.Size(88, 27);
             this.ContinueButton.TabIndex = 3;
             this.ContinueButton.Text = "Continue";
             this.ContinueButton.UseVisualStyleBackColor = true;
@@ -228,22 +242,24 @@ namespace SysBot.Pokemon.WinForms
             // 
             // RTB_Results
             // 
-            this.RTB_Results.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.RTB_Results.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.RTB_Results.Location = new System.Drawing.Point(3, 36);
+            this.RTB_Results.Location = new System.Drawing.Point(4, 42);
+            this.RTB_Results.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.RTB_Results.Name = "RTB_Results";
             this.RTB_Results.ReadOnly = true;
-            this.RTB_Results.Size = new System.Drawing.Size(443, 244);
+            this.RTB_Results.Size = new System.Drawing.Size(516, 281);
             this.RTB_Results.TabIndex = 0;
             this.RTB_Results.Text = "";
             // 
             // B_Stop
             // 
             this.B_Stop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.B_Stop.Location = new System.Drawing.Point(359, 0);
+            this.B_Stop.Location = new System.Drawing.Point(720, 0);
+            this.B_Stop.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.B_Stop.Name = "B_Stop";
-            this.B_Stop.Size = new System.Drawing.Size(59, 20);
+            this.B_Stop.Size = new System.Drawing.Size(69, 23);
             this.B_Stop.TabIndex = 4;
             this.B_Stop.Text = "Stop All";
             this.B_Stop.UseVisualStyleBackColor = true;
@@ -252,9 +268,10 @@ namespace SysBot.Pokemon.WinForms
             // B_Start
             // 
             this.B_Start.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.B_Start.Location = new System.Drawing.Point(294, 0);
+            this.B_Start.Location = new System.Drawing.Point(644, 0);
+            this.B_Start.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.B_Start.Name = "B_Start";
-            this.B_Start.Size = new System.Drawing.Size(59, 20);
+            this.B_Start.Size = new System.Drawing.Size(69, 23);
             this.B_Start.TabIndex = 3;
             this.B_Start.Text = "Start All";
             this.B_Start.UseVisualStyleBackColor = true;
@@ -262,13 +279,14 @@ namespace SysBot.Pokemon.WinForms
             // 
             // Main
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(457, 309);
+            this.ClientSize = new System.Drawing.Size(834, 511);
             this.Controls.Add(this.B_Stop);
             this.Controls.Add(this.B_Start);
             this.Controls.Add(this.TC_Main);
             this.Icon = global::SysBot.Pokemon.WinForms.Properties.Resources.icon;
+            this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.MaximizeBox = false;
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

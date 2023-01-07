@@ -212,11 +212,11 @@ namespace SysBot.Pokemon
                     RaidPenaltyCount = RaidTracker[LobbyNIDs[i]] + RaidPenaltyCount + 1;
                     RaidTracker.Remove(LobbyNIDs[i]);
                     RaidTracker.Add(LobbyNIDs[i], RaidPenaltyCount);
-                    Log($"Player: {initialTrainers[i]} completed the raid with Penalty Count: {RaidPenaltyCount}.");
+                    Log($"Player: {initialTrainers[i]} completed raid, Penalty Count: {RaidPenaltyCount}.");
                     if (RaidPenaltyCount > Settings.CatchLimit && !RaiderBanList.Contains(LobbyNIDs[i]) && Settings.CatchLimit != 0)
                     {
-                        Log($"Player: {initialTrainers[i]} has been added to the banlist for joining {RaidPenaltyCount}x this raid session on {DateTime.Now}.");
-                        RaiderBanList.List.Add(new() { ID = LobbyNIDs[i], Name = initialTrainers[i], Comment = $"Exceeded max joins on {DateTime.Now}." });
+                        Log($"Player: {initialTrainers[i]} added to ban list as of {RaidPenaltyCount}/{Settings.CatchLimit} this raid session on {DateTime.Now}.");
+                        RaiderBanList.List.Add(new() { ID = LobbyNIDs[i], Name = initialTrainers[i], Comment = $"{Settings.RaidSpecies} ({RaidPenaltyCount}/{Settings.CatchLimit}) @ {DateTime.Now}." });
                     }
                 }
             }
@@ -341,7 +341,7 @@ namespace SysBot.Pokemon
                     if (!inRaid && isBanned)
                     {
                         var titlemsg = "Raid Canceled Due to Banned User";
-                        var msg = $"{TrainerName} was found in the lobby.\nRecreating raid team.\n";
+                        var msg = $"Banned User: {TrainerName} \nRecreating raid team.\n\n";
                         if (!string.IsNullOrEmpty(GlobalBanReason))
                             msg = msg + GlobalBanReason;
                         else
@@ -353,9 +353,14 @@ namespace SysBot.Pokemon
                             if (Settings.TakeScreenshot)
                                 bytes = await SwitchConnection.Screengrab(token).ConfigureAwait(false);
 
-                            var embed = new EmbedBuilder();
-                            embed.AddField("Description:", $"**{titlemsg}**\n{msg}");
-                            embed.AddField("Session Stats:", $"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount}");
+                            var embed = new EmbedBuilder()
+                            {
+                                Title = $"{titlemsg}",
+                                Description = msg
+                            };
+                            embed.AddField("Ban Appeal Server"  , "[Pokemon Automation](https://discord.gg/pokemonautomation)", true);
+                            embed.AddField("Appeal Channel Here", "[#tera-raid-bans](https://discord.com/channels/695809740428673034/1050667958562738197)", true);
+                            embed.WithFooter($"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865");
                             embed.ImageUrl = "attachment://zap.jpg";
                             embed.Color = Color.Red;
                             EmbedQueue.Enqueue((bytes, embed));
@@ -374,14 +379,22 @@ namespace SysBot.Pokemon
         private async Task<(bool, List<ulong>, List<string>)> ReadTrainers(ulong[] nids, CancellationToken token)
         {
             var uptime = DateTime.Now - startTime;
-            var embed = new EmbedBuilder();
-            embed.AddField("Tera Raid Notification:", $"**{Settings.RaidTitleDescription}**" + $"\n\nUptime: " + uptime.ToString(@"d\.hh\:mm\:ss"));
-            embed.AddField("Description:", $"\n{Settings.RaidDescription}");
-            embed.AddField("Raid Code:", await GetRaidCode(token).ConfigureAwait(false));
-            embed.AddField("Host:", $"{HostName}");
-            embed.AddField("Session Stats:", $"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount}");
+            var embed = new EmbedBuilder()
+            {
+                Title = $"**{Settings.RaidTitleDescription} (LIMIT: {Settings.CatchLimit})**",
+                Description = $"᲼\n᲼"
+            };
+            embed.AddField("IVs:"       ,   $"{Settings.RaidSpeciesIVs}"    , true);
+            embed.AddField("Nature:"    ,   $"{Settings.RaidSpeciesNature}" , true);
+            embed.AddField("Ability:"   ,   $"{Settings.RaidSpeciesAbility}", true);
+            //If Settings.CodeInInfo == True
+            if (Settings.CodeInInfo == true)
+            {
+                embed.AddField("Raid Code:", await GetRaidCode(token).ConfigureAwait(false));
+            };
             embed.ImageUrl = "attachment://zap.jpg";
-            embed.Color = Color.Green;
+            embed.WithFooter($"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865");
+            embed.Color = Color.Gold;
             string hattrick = string.Empty;
             TrainerNID = new();
 
@@ -443,7 +456,7 @@ namespace SysBot.Pokemon
             {
                 if (string.Equals(initialTrainers[0], initialTrainers[1]) && string.Equals(initialTrainers[1], initialTrainers[2]))
                 {
-                    hattrick = $" 🌟🎩🌟 {initialTrainers[1]} Hat Trick 🌟🎩🌟\n\n" + Settings.RaidTitleDescription;
+                    hattrick = $" 🌟🎩🌟 {initialTrainers[1]} Hat Trick 🌟🎩🌟\n\n";
                 }
             }
             await Task.Delay(2_000, token).ConfigureAwait(false);
@@ -453,13 +466,24 @@ namespace SysBot.Pokemon
                 var bytes = new byte[0];
                 if (Settings.TakeScreenshot)
                     bytes = await SwitchConnection.Screengrab(token).ConfigureAwait(false);
-                embed = new EmbedBuilder();
+                
                 if (!string.IsNullOrEmpty(hattrick))
-                    embed.AddField("Special Event:", $"{hattrick}");
-                embed.AddField("Description:", $"Raid #{RaidCount} is starting!\n\nHost - {HostName}\nPlayer - {rez}");
-                embed.AddField("Session Stats:", $"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount}");
+                {
+                    embed = new EmbedBuilder()
+                    {
+                        Title = $"**{hattrick}**",
+                    };
+                } else {
+                    embed = new EmbedBuilder()
+                    {
+                        Title = $"**Raid: {RaidCount} starting!**",
+
+                    };
+                };
+                embed.AddField("Players:", $"Player - {rez}");
+                embed.WithFooter($"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865");
                 embed.ImageUrl = "attachment://zap.jpg";
-                embed.Color = Color.Teal;
+                embed.Color = Color.Purple;
                 EmbedQueue.Enqueue((bytes, embed));
             }
             return (true, LobbyNIDs, initialTrainers);
