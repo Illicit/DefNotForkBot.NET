@@ -425,7 +425,7 @@ namespace SysBot.Pokemon
                 break;
             }
 
-            Log($"Raid #{RaidCount} is starting!");
+            Log($"Raid #{RaidCount} is starting! [{RaidCode}]");
 
             if (!string.IsNullOrEmpty(initialTrainers[0]) && !string.IsNullOrEmpty(initialTrainers[1]) && !string.IsNullOrEmpty(initialTrainers[2]))
             {
