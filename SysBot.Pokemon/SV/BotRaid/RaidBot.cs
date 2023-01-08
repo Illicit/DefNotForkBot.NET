@@ -169,8 +169,8 @@ namespace SysBot.Pokemon
 
                     if (penalty > Settings.CatchLimit && !RaiderBanList.Contains(nid) && Settings.CatchLimit != 0)
                     {
-                        Log($"Player: {initialTrainers[i]} added to ban list as of {RaidPenaltyCount}/{Settings.CatchLimit} this raid session on {DateTime.Now}.");
-                        RaiderBanList.List.Add(new() { ID = LobbyNIDs[i], Name = initialTrainers[i], Comment = $"{Settings.RaidSpecies} ({RaidPenaltyCount}/{Settings.CatchLimit}) @ {DateTime.Now}." });
+                        Log($"Player: {name} added to ban list as of {penalty}/{Settings.CatchLimit} this raid session on {DateTime.Now}.");
+                        RaiderBanList.List.Add(new() { ID = nid, Name = name, Comment = $"{Settings.RaidSpecies} ({penalty}/{Settings.CatchLimit}) @ {DateTime.Now}." });
                     }
                 }
             }
@@ -338,8 +338,7 @@ namespace SysBot.Pokemon
             embed.ImageUrl = "attachment://zap.jpg";
             embed.WithFooter($"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865");
             embed.Color = Color.Gold;
-            string hattrick = string.Empty;
-            TrainerNID = new();
+            //TrainerNID = new();
 
             if (RaidSVEmbedsInitialized)
             {
@@ -421,13 +420,6 @@ namespace SysBot.Pokemon
             if (lobbyTrainersFinal.Count == 3 && names.Distinct().Count() == 1)
                 hattrick = $" 🪄🎩🌟 {lobbyTrainers[0]} Hat Trick 🪄🎩🌟\n\n{Settings.RaidTitleDescription}";
 
-            if (!string.IsNullOrEmpty(initialTrainers[0]) && !string.IsNullOrEmpty(initialTrainers[1]) && !string.IsNullOrEmpty(initialTrainers[2]))
-            {
-                if (string.Equals(initialTrainers[0], initialTrainers[1]) && string.Equals(initialTrainers[1], initialTrainers[2]))
-                {
-                    hattrick = $" 🌟🎩🌟 {initialTrainers[1]} Hat Trick 🌟🎩🌟\n\n";
-                }
-            }
             await Task.Delay(2_000, token).ConfigureAwait(false);
             if (RaidSVEmbedsInitialized)
             {
