@@ -410,15 +410,7 @@ namespace SysBot.Pokemon
                 lobbyTrainersFinal.Add((nid, trainer));
             }
 
-            if (lobbyTrainersFinal.Count == 0)
-                return (false, lobbyTrainers);
-
-            RaidCount++;
-            Log($"Raid #{RaidCount} is starting!");
-            var names = lobbyTrainersFinal.Select(x => x.Item2.OT).ToArray();
-            string hattrick = string.Empty;
-            if (lobbyTrainersFinal.Count == 3 && names.Distinct().Count() == 1)
-                hattrick = $" 🪄🎩🌟 {lobbyTrainers[0]} Hat Trick 🪄🎩🌟\n\n{Settings.RaidTitleDescription}";
+            Log($"Raid #{RaidCount} is starting! [{RaidCode}]");
 
             await Task.Delay(2_000, token).ConfigureAwait(false);
             if (RaidSVEmbedsInitialized)
