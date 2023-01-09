@@ -29,6 +29,9 @@ namespace SysBot.Pokemon
         [Category(Hosting), Description("If the species does not have an alternate form, leave at 0.")]
         public int RaidSpeciesForm { get; set; } = 0;
 
+        [Category(Hosting), Description("If the species is shiny set to true. False for non-shiny.")]
+        public bool RaidSpeciesIsShiny { get; set; } = true;
+
         [Category(Hosting), Description("Raid Species IVs")]
         public string RaidSpeciesIVs { get; set; } = String.Empty;
 
