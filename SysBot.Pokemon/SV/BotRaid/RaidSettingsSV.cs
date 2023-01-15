@@ -32,18 +32,6 @@ namespace SysBot.Pokemon
         [Category(Hosting), Description("If the species is shiny set to true. False for non-shiny.")]
         public bool RaidSpeciesIsShiny { get; set; } = true;
 
-        [Category(Hosting), Description("Raid Species IVs")]
-        public string RaidSpeciesIVs { get; set; } = String.Empty;
-
-        [Category(Hosting), Description("Raid Species nature")]
-        public Nature RaidSpeciesNature { get; set; } = Nature.Random;
-
-        [Category(Hosting), Description("Raid Species ability")]
-        public Ability RaidSpeciesAbility { get; set; } = Ability.Adaptability;
-
-        [Category(Hosting), Description("If the species is female set to true.")]
-        public bool RaidSpeciesIsFemale { get; set; } = false;
-
         [Category(FeatureToggle), Description("If true, the bot will use a random code for the raid.")]
         public bool CodeTheRaid { get; set; } = true;
 

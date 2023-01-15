@@ -88,7 +88,7 @@ namespace SysBot.Pokemon
                     await Click(A, 1_000, token).ConfigureAwait(false);
 
                 await GrabValues(token).ConfigureAwait(false);
-            }            
+            }
 
             if (Settings.EatFirst == true)
                 await MakeSandwich(token).ConfigureAwait(false);
@@ -136,7 +136,7 @@ namespace SysBot.Pokemon
 
                     await Click(Y, 1_500, token).ConfigureAwait(false); // Attempt to leave the picnic again, in case you were stuck interacting with a pokemon
                     await Click(A, 1_000, token).ConfigureAwait(false); // Overworld seems to trigger true when you leave the Pokemon washing mode, so we have to try to exit picnic immediately
-                    
+
                     for (int i = 0; i < 4; i++)
                         await Click(B, 0_500, token).ConfigureAwait(false); // Click a few times to attempt to escape any menu
                 }
