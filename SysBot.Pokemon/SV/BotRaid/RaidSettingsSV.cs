@@ -14,14 +14,14 @@ namespace SysBot.Pokemon
         [Category(FeatureToggle), Description("URL to Pokémon Automation's Tera Ban List json (or one matching the required structure).")]
         public string BanListURL { get; set; } = "https://raw.githubusercontent.com/PokemonAutomation/ServerConfigs-PA-SHA/main/PokemonScarletViolet/TeraAutoHost-BanList.json";
 
-        [Category(Hosting), Description("Amount of raids before updating the ban list.")]
+        [Category(Hosting), Description("Amount of raids before updating the ban list. If you want the global ban list off, set this to -1.")]
         public int RaidsBetweenUpdate { get; set; } = 10;
 
-        [Category(FeatureToggle), Description("Optional description of the raid title the bot is hosting.")]
-        public string RaidTitleDescription { get; set; } = string.Empty;
+        [Category(FeatureToggle), Description("Raid embed title.")]
+        public string RaidEmbedTitle { get; set; } = "Tera Raid Notification";
 
-        [Category(FeatureToggle), Description("Optional description of the raid the bot is hosting.")]
-        public string[] RaidDescription { get; set; } = Array.Empty<string>();
+        [Category(FeatureToggle), Description("Raid embed description.")]
+        public string[] RaidEmbedDescription { get; set; } = Array.Empty<string>();
 
         [Category(Hosting), Description("Input the Species to post a Thumbnail in the embeds. Ignored if 0.")]
         public Species RaidSpecies { get; set; } = Species.None;
