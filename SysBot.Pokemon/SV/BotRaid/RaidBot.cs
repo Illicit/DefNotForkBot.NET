@@ -341,10 +341,30 @@ namespace SysBot.Pokemon
             bool isBanned = banResultCC.Item1 || banResultCFW != default;
             if (isBanned)
             {
+                var titlemsg = "Raid Canceled Due to Banned User";
                 var msg = banResultCC.Item1 ? banResultCC.Item2 : $"Banned user {banResultCFW!.Name} found in the host's ban list.\n{banResultCFW.Comment}";
                 Log(msg);
 
                 await EnqueueEmbed(null, msg, false, true, token).ConfigureAwait(false);
+                if (RaidSVEmbedsInitialized)
+                {
+                    var bytes = Array.Empty<byte>();
+                    if (Settings.TakeScreenshot)
+                        bytes = await SwitchConnection.Screengrab(token).ConfigureAwait(false);
+
+                    var embed = new EmbedBuilder()
+                    {
+                        Title = $"{titlemsg}",
+                        Description = msg
+                    };
+                    embed.AddField("Ban Appeal Server", "[Pokemon Automation](https://discord.gg/pokemonautomation)", true);
+                    embed.AddField("Appeal Channel Here", "[#tera-raid-bans](https://discord.com/channels/695809740428673034/1050667958562738197)", true);
+                    embed.WithFooter($"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865");
+                    embed.ImageUrl = "attachment://zap.jpg";
+                    embed.Color = Color.Red;
+                    EmbedQueue.Enqueue((bytes, embed));
+                }
+
                 return true;
             }
 
@@ -354,7 +374,36 @@ namespace SysBot.Pokemon
         // This is messy, needs a way to check if player X is ready, and when we're in a raid, in order to avoid adding players that may have disconnected or quit. Players get shifted down as they leave.
         private async Task<(bool, List<(ulong, TradeMyStatus)>)> ReadTrainers(CancellationToken token)
         {
-            await EnqueueEmbed(null, "", false, false, token).ConfigureAwait(false);
+            var raidDescr = string.Empty;
+            if (Settings.RaidDescription.Length != 0)            
+                raidDescr = string.Join("\n", Settings.RaidDescription);
+            
+            var uptime = DateTime.Now - startTime;
+            var embed = new EmbedBuilder()
+            {
+                Title = $"**{Settings.RaidTitleDescription} (LIMIT: {Settings.CatchLimit})**",
+                Description = $"᲼\n᲼"
+            };
+            embed.AddField("IVs:"       ,   $"{Settings.RaidSpeciesIVs}"    , true);
+            embed.AddField("Nature:"    ,   $"{Settings.RaidSpeciesNature}" , true);
+            embed.AddField("Ability:"   ,   $"{Settings.RaidSpeciesAbility}", true);
+            //If Settings.CodeInInfo == True
+            if (Settings.CodeInInfo == true)
+            {
+                embed.AddField("Raid Code:", await GetRaidCode(token).ConfigureAwait(false));
+            };
+            embed.ImageUrl = "attachment://zap.jpg";
+            embed.WithFooter($"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865");
+            embed.Color = Color.Gold;
+            //TrainerNID = new();
+
+            if (RaidSVEmbedsInitialized)
+            {
+                var bytes = Array.Empty<byte>();
+                if (Settings.TakeScreenshot)
+                    bytes = await SwitchConnection.Screengrab(token).ConfigureAwait(false);
+                EmbedQueue.Enqueue((bytes, embed));
+            }
 
             List<(ulong, TradeMyStatus)> lobbyTrainers = new();
             var wait = TimeSpan.FromSeconds(Settings.TimeToWait);
@@ -415,7 +464,41 @@ namespace SysBot.Pokemon
                 return (false, lobbyTrainers);
             }
             Log($"Raid #{RaidCount} is starting!");
-            return (true, lobbyTrainers);
+
+            var names = lobbyTrainersFinal.Select(x => x.Item2.OT).ToArray();
+            string hattrick = string.Empty;
+            if (lobbyTrainersFinal.Count == 3 && names.Distinct().Count() == 1)
+                hattrick = $" 🪄🎩🌟 {lobbyTrainers[0].Item2.OT} Hat Trick 🪄🎩🌟\n\n{Settings.RaidTitleDescription}";
+
+            await Task.Delay(2_000, token).ConfigureAwait(false);
+            if (RaidSVEmbedsInitialized)
+            {
+                var rez = string.Join("\nPlayer - ", names);
+                var bytes = Array.Empty<byte>();
+                if (Settings.TakeScreenshot)
+                    bytes = await SwitchConnection.Screengrab(token).ConfigureAwait(false);
+                
+                if (!string.IsNullOrEmpty(hattrick))
+                {
+                    embed = new EmbedBuilder()
+                    {
+                        Title = $"**{hattrick}**",
+                    };
+                } else {
+                    embed = new EmbedBuilder()
+                    {
+                        Title = $"**Raid: {RaidCount} starting!**",
+
+                    };
+                };
+                embed.AddField("Players:", $"Player - {rez}");
+                embed.WithFooter($"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865");
+                embed.ImageUrl = "attachment://zap.jpg";
+                embed.Color = Color.Purple;
+                EmbedQueue.Enqueue((bytes, embed));
+            }
+
+            return (true, lobbyTrainersFinal);
         }
 
         private async Task<bool> IsConnectedToLobby(CancellationToken token)
