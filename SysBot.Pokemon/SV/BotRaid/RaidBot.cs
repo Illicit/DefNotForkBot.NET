@@ -375,13 +375,13 @@ namespace SysBot.Pokemon
         private async Task<(bool, List<(ulong, TradeMyStatus)>)> ReadTrainers(CancellationToken token)
         {
             var raidDescr = string.Empty;
-            if (Settings.RaidDescription.Length != 0)            
-                raidDescr = string.Join("\n", Settings.RaidDescription);
+            if (Settings.RaidEmbedDescription.Length != 0)            
+                raidDescr = string.Join("\n", Settings.RaidEmbedDescription);
             
             var uptime = DateTime.Now - startTime;
             var embed = new EmbedBuilder()
             {
-                Title = $"**{Settings.RaidTitleDescription} (LIMIT: {Settings.CatchLimit})**",
+                Title = $"**{Settings.RaidEmbedTitle} (LIMIT: {Settings.CatchLimit})**",
                 Description = $"᲼\n᲼"
             };
             embed.AddField("IVs:"       ,   $"{Settings.RaidSpeciesIVs}"    , true);
@@ -468,7 +468,7 @@ namespace SysBot.Pokemon
             var names = lobbyTrainersFinal.Select(x => x.Item2.OT).ToArray();
             string hattrick = string.Empty;
             if (lobbyTrainersFinal.Count == 3 && names.Distinct().Count() == 1)
-                hattrick = $" 🪄🎩🌟 {lobbyTrainers[0].Item2.OT} Hat Trick 🪄🎩🌟\n\n{Settings.RaidTitleDescription}";
+                hattrick = $" 🪄🎩🌟 {lobbyTrainers[0].Item2.OT} Hat Trick 🪄🎩🌟\n\n{Settings.RaidEmbedTitle}";
 
             await Task.Delay(2_000, token).ConfigureAwait(false);
             if (RaidSVEmbedsInitialized)
