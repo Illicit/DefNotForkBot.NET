@@ -344,6 +344,7 @@ namespace SysBot.Pokemon
             bool isBanned = banResultCC.Item1 || banResultCFW != default;
             if (isBanned)
             {
+                var titlemsg = "Raid Canceled Due to Banned User";
                 var msg = banResultCC.Item1 ? banResultCC.Item2 : $"Banned user {banResultCFW!.Name} found in the host's ban list.\n{banResultCFW.Comment}";
                 Log(msg);
 
@@ -353,9 +354,14 @@ namespace SysBot.Pokemon
                     if (Settings.TakeScreenshot)
                         bytes = await SwitchConnection.Screengrab(token).ConfigureAwait(false);
 
-                    var embed = new EmbedBuilder();
-                    embed.AddField("Description:", $"**{titlemsg}**\n{msg}");
-                    embed.AddField("Session Stats:", $"Raids: {RaidCount} - Wins: {WinCount} - Losses: {LossCount}");
+                    var embed = new EmbedBuilder()
+                    {
+                        Title = $"{titlemsg}",
+                        Description = msg
+                    };
+                    embed.AddField("Ban Appeal Server", "[Pokemon Automation](https://discord.gg/pokemonautomation)", true);
+                    embed.AddField("Appeal Channel Here", "[#tera-raid-bans](https://discord.com/channels/695809740428673034/1050667958562738197)", true);
+                    embed.WithFooter($"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865");
                     embed.ImageUrl = "attachment://zap.jpg";
                     embed.Color = Color.Red;
                     EmbedQueue.Enqueue((bytes, embed));
@@ -371,13 +377,13 @@ namespace SysBot.Pokemon
         private async Task<(bool, List<(ulong, TradeMyStatus)>)> ReadTrainers(DateTime startTime, string ot, CancellationToken token)
         {
             var raidDescr = string.Empty;
-            if (Settings.RaidDescription.Length != 0)            
-                raidDescr = string.Join("\n", Settings.RaidDescription);
+            if (Settings.RaidEmbedDescription.Length != 0)            
+                raidDescr = string.Join("\n", Settings.RaidEmbedDescription);
             
             var uptime = DateTime.Now - startTime;
             var embed = new EmbedBuilder()
             {
-                Title = $"**{Settings.RaidTitleDescription} (LIMIT: {Settings.CatchLimit})**",
+                Title = $"**{Settings.RaidEmbedTitle} (LIMIT: {Settings.CatchLimit})**",
                 Description = $"᲼\n᲼"
             };
             embed.AddField("IVs:"       ,   $"{Settings.RaidSpeciesIVs}"    , true);
@@ -464,7 +470,7 @@ namespace SysBot.Pokemon
             var names = lobbyTrainersFinal.Select(x => x.Item2.OT).ToArray();
             string hattrick = string.Empty;
             if (lobbyTrainersFinal.Count == 3 && names.Distinct().Count() == 1)
-                hattrick = $" 🪄🎩🌟 {lobbyTrainers[0].Item2.OT} Hat Trick 🪄🎩🌟\n\n{Settings.RaidTitleDescription}";
+                hattrick = $" 🪄🎩🌟 {lobbyTrainers[0].Item2.OT} Hat Trick 🪄🎩🌟\n\n{Settings.RaidEmbedTitle}";
 
             await Task.Delay(2_000, token).ConfigureAwait(false);
             if (RaidSVEmbedsInitialized)
