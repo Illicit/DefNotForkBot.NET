@@ -178,7 +178,7 @@ namespace SysBot.Pokemon
                     bool hatTrick = lobbyTrainersFinal.Count == 3 && names.Distinct().Count() == 1;
 
                     await Task.Delay(15_000, token).ConfigureAwait(false);
-                    await EnqueueEmbed(names, "", hatTrick, false, token).ConfigureAwait(false);
+                    await EnqueueEmbed(names, "", hatTrick, false, true, token).ConfigureAwait(false);
                 }
 
                 while (await IsConnectedToLobby(token).ConfigureAwait(false))
@@ -344,7 +344,7 @@ namespace SysBot.Pokemon
                 var msg = banResultCC.Item1 ? banResultCC.Item2 : $"Banned user {banResultCFW!.Name} found in the host's ban list.\n{banResultCFW.Comment}";
                 Log(msg);
 
-                await EnqueueEmbed(null, msg, false, true, token).ConfigureAwait(false);
+                await EnqueueEmbed(null, msg, false, true, false, token).ConfigureAwait(false);
                 return true;
             }
 
@@ -354,7 +354,7 @@ namespace SysBot.Pokemon
         // This is messy, needs a way to check if player X is ready, and when we're in a raid, in order to avoid adding players that may have disconnected or quit. Players get shifted down as they leave.
         private async Task<(bool, List<(ulong, TradeMyStatus)>)> ReadTrainers(CancellationToken token)
         {
-            await EnqueueEmbed(null, "", false, false, token).ConfigureAwait(false);
+            await EnqueueEmbed(null, "", false, false, false, token).ConfigureAwait(false);
 
             List<(ulong, TradeMyStatus)> lobbyTrainers = new();
             var wait = TimeSpan.FromSeconds(Settings.TimeToWait);
@@ -483,12 +483,17 @@ namespace SysBot.Pokemon
             Log("Caching offsets complete!");
         }
 
-        private async Task EnqueueEmbed(List<string>? names, string message, bool hatTrick, bool disband, CancellationToken token)
+        private async Task EnqueueEmbed(List<string>? names, string message, bool hatTrick, bool disband, bool starting, CancellationToken token)
         {
             if (RaidSVEmbedsInitialized)
             {
+                // Get Code early for use in title IF starting
+                var rcode = await GetRaidCode(token).ConfigureAwait(false);
                 // Title can only be up to 256 characters.
-                var title = hatTrick && names is not null ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedTitle.Length > 0 ? Settings.RaidEmbedTitle : Settings.RaidEmbedTitle;
+                // IF hatTrick & IF NOT empty names
+                // IF RaidEmbedTitle > 0 & raid starting
+                // IF RaidEmbedTitle > 0
+                var title = hatTrick && names is not null ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedTitle.Length > 0 && starting ? $"**Raid: {RaidCount} Starting! [{rcode}]**" : $"**{Settings.RaidEmbedTitle}**";
                 if (title.Length > 256)
                     title = title[..256];
 
@@ -501,15 +506,15 @@ namespace SysBot.Pokemon
                 var embed = new EmbedBuilder()
                 {
                     Title = disband ? "**Raid was disbanded due to a banned user**" : title,
-                    Description = disband ? message : description + $"᲼\n᲼",
-                    Color = disband ? Color.Red : hatTrick ? Color.DarkMagenta : Color.Purple,
+                    Description = disband ? message : !starting ? description + $"᲼\n᲼" : description,
+                    Color = disband ? Color.Red : hatTrick ? Color.DarkMagenta : starting ? Color.Purple : Color.Gold,
                     ImageUrl = bytes.Length > 0 ? "attachment://zap.jpg" : default,
                 }.WithFooter(new EmbedFooterBuilder()
                 {
                     Text = $"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865"
                 });
 
-                if (!disband)
+                if (!disband && !starting)
                 {
                     embed.AddField("IVs:", $"{Settings.RaidSpeciesIVs}", true);
                     embed.AddField("Nature:", $"{Settings.RaidSpeciesNature}", true);
@@ -519,16 +524,15 @@ namespace SysBot.Pokemon
                 if (disband)
                 {
                     embed.AddField("Ban Appeal Server", "[Pokemon Automation](https://discord.gg/pokemonautomation)", true);
-                    embed.AddField("Appeal Channel Here", "[#tera-raid-bans](https://discord.com/channels/695809740428673034/1050667958562738197)", true);
+                    embed.AddField("Appeal Here", "[#tera-raid-bans](https://discord.com/channels/695809740428673034/1050667958562738197)", true);
                 }
 
-                if (!disband && names is null)
+                if (!disband && names is null && Settings.CodeInInfo)
                 {
-                    var code = $"**{(Settings.CodeTheRaid ? await GetRaidCode(token).ConfigureAwait(false) : "Free For All")}**";
-                    embed.AddField("**Waiting in lobby!**", $"Raid code: {code}");
+                    embed.AddField("**Waiting in lobby!**", $"Raid code: {rcode}");
                 }
 
-                if (!disband && names is not null)
+                if (!disband && names is not null && starting)
                 {
                     var players = string.Empty;
                     if (names.Count == 0)
@@ -542,6 +546,8 @@ namespace SysBot.Pokemon
                             i++;
                         });
                     }
+
+                    embed.AddField($"**Players:**", players);
                 }
 
                 EmbedQueue.Enqueue((bytes, embed));
