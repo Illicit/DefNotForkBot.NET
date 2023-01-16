@@ -493,7 +493,7 @@ namespace SysBot.Pokemon
                 // IF hatTrick & IF NOT empty names
                 // IF RaidEmbedTitle > 0 & raid starting
                 // IF RaidEmbedTitle > 0
-                var title = hatTrick && names is not null ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedTitle.Length > 0 && starting ? $"**Raid: {RaidCount} Starting! [{rcode}]**" : $"**{Settings.RaidEmbedTitle}**";
+                var title = hatTrick && names is not null ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedTitle.Length > 0 && starting ? $"**Raid: {RaidCount} Starting! [{rcode}]**" : $"**{Settings.RaidEmbedTitle} [Limit: {Settings.CatchLimit}]**";
                 if (title.Length > 256)
                     title = title[..256];
 
