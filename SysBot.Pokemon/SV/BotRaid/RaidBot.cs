@@ -408,14 +408,59 @@ namespace SysBot.Pokemon
                 }
             }
 
-            RaidCount++;
-            if (lobbyTrainers.Count == 0)
+            // Loop through trainers again in case someone disconnected.
+            List<(ulong, TradeMyStatus)> lobbyTrainersFinal = new();
+            for (int i = 0; i < 3; i++)
             {
-                Log("Nobody joined the raid, recovering...");
-                return (false, lobbyTrainers);
+                var player = i + 2;
+                var nidOfs = TeraNIDOffsets[i];
+                var data = await SwitchConnection.ReadBytesAbsoluteAsync(nidOfs, 8, token).ConfigureAwait(false);
+                var nid = BitConverter.ToUInt64(data, 0);
+
+                var info = new TradeMyStatus();
+                var pointer = new long[] { 0x437ECE0, 0x48, 0xE0 + (i * 0x30), 0x0 };
+                var trainer = await GetTradePartnerMyStatus(pointer, token).ConfigureAwait(false);
+
+                if (nid != 0 && !string.IsNullOrWhiteSpace(trainer.OT))
+                {
+                    if (await CheckIfTrainerBanned(trainer, nid, player, token).ConfigureAwait(false))
+                        return (false, lobbyTrainersFinal);
+
+                    lobbyTrainersFinal.Add((nid, trainer));
+                }
             }
-            Log($"Raid #{RaidCount} is starting!");
-            return (true, lobbyTrainers);
+
+            Log($"Raid #{RaidCount} is starting! [{RaidCode}]");
+
+            await Task.Delay(2_000, token).ConfigureAwait(false);
+            if (RaidSVEmbedsInitialized)
+            {
+                var rez = string.Join("\nPlayer - ", names);
+                var bytes = Array.Empty<byte>();
+                if (Settings.TakeScreenshot)
+                    bytes = await SwitchConnection.Screengrab(token).ConfigureAwait(false);
+                
+                if (!string.IsNullOrEmpty(hattrick))
+                {
+                    embed = new EmbedBuilder()
+                    {
+                        Title = $"**{hattrick}**",
+                    };
+                } else {
+                    embed = new EmbedBuilder()
+                    {
+                        Title = $"**Raid: {RaidCount} starting!**",
+
+                    };
+                };
+                embed.AddField("Players:", $"Player - {rez}");
+                embed.WithFooter($"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865");
+                embed.ImageUrl = "attachment://zap.jpg";
+                embed.Color = Color.Purple;
+                EmbedQueue.Enqueue((bytes, embed));
+            }
+
+            return (true, lobbyTrainersFinal);
         }
 
         private async Task<bool> IsConnectedToLobby(CancellationToken token)
