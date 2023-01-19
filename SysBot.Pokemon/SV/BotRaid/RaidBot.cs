@@ -213,7 +213,7 @@ namespace SysBot.Pokemon
                     {
                         // We read bad data, reset game to end early and recover.
                         var msg = "Oops! Something went wrong, resetting to recover.";
-                        await EnqueueEmbed(null, msg, false, false, token).ConfigureAwait(false);
+                        await EnqueueEmbed(null, msg, false, false, false, token).ConfigureAwait(false);
                         await ReOpenGame(Hub.Config, token).ConfigureAwait(false);
                         return;
                     }
