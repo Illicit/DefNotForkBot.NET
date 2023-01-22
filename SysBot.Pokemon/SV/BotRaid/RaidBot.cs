@@ -529,7 +529,17 @@ namespace SysBot.Pokemon
 
                 if (!disband && names is null && Settings.CodeInInfo)
                 {
-                    embed.AddField("**Waiting in lobby!**", $"Raid code: {rcode}");
+                    if (Settings.CodeIfSplitHidden)
+                    {
+                        string rcode1 = rcode.Substring(0, rcode.Length / 2);
+                        string rcode2 = rcode.Substring(rcode.Length);
+
+                        embed.AddField("**Waiting in lobby!**", $"Raid code: ||{rcode1}||+||{rcode2}||");
+                    }
+                    else
+                    {
+                        embed.AddField("**Waiting in lobby!**", $"Raid code: {rcode}");
+                    }
                 }
 
                 if (!disband && names is not null && starting)
