@@ -532,7 +532,7 @@ namespace SysBot.Pokemon
                     if (Settings.CodeIfSplitHidden)
                     {
                         string rcode1 = rcode.Substring(0, rcode.Length / 2);
-                        string rcode2 = rcode.Substring(rcode.Length);
+                        string rcode2 = rcode.Substring(rcode.Length, rcode.Length);
 
                         embed.AddField("**Waiting in lobby!**", $"Raid code: ||{rcode1}||+||{rcode2}||");
                     }
