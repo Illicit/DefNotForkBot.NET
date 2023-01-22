@@ -514,13 +514,6 @@ namespace SysBot.Pokemon
                     Text = $"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865"
                 });
 
-                if (!disband && !starting)
-                {
-                    embed.AddField("IVs:", $"{Settings.RaidSpeciesIVs}", true);
-                    embed.AddField("Nature:", $"{Settings.RaidSpeciesNature}", true);
-                    embed.AddField("Ability:", $"{Settings.RaidSpeciesAbility}", true);
-                }
-
                 if (disband)
                 {
                     embed.AddField("Ban Appeal Server", "[Pokemon Automation](https://discord.gg/pokemonautomation)", true);
@@ -529,10 +522,10 @@ namespace SysBot.Pokemon
 
                 if (!disband && names is null && Settings.CodeInInfo)
                 {
-                    if (Settings.CodeIfSplitHidden)
+                    if (Settings.CodeIfSplitHidden && rcode.Length == 6)
                     {
                         string rcode1 = rcode.Substring(0, rcode.Length / 2);
-                        string rcode2 = rcode.Substring(rcode.Length, rcode.Length);
+                        string rcode2 = rcode.Substring(rcode.Length/2);
 
                         embed.AddField("**Waiting in lobby!**", $"Raid code: ||{rcode1}|| ||{rcode2}||");
                     }
@@ -540,6 +533,13 @@ namespace SysBot.Pokemon
                     {
                         embed.AddField("**Waiting in lobby!**", $"Raid code: {rcode}");
                     }
+                }
+
+                if (!disband && !starting)
+                {
+                    embed.AddField("IVs:", $"{Settings.RaidSpeciesIVs}", true);
+                    embed.AddField("Nature:", $"{Settings.RaidSpeciesNature}", true);
+                    embed.AddField("Ability:", $"{Settings.RaidSpeciesAbility}", true);
                 }
 
                 if (!disband && names is not null && starting)
