@@ -527,7 +527,7 @@ namespace SysBot.Pokemon
                         string rcode1 = rcode.Substring(0, rcode.Length / 2);
                         string rcode2 = rcode.Substring(rcode.Length/2);
 
-                        embed.AddField("**Waiting in lobby!**", $"Raid code: ||{rcode1}|| ||{rcode2}||");
+                        embed.AddField("**Waiting in lobby!**", $"Raid code: ||{rcode1}||+||{rcode2}||");
                     }
                     else
                     {
