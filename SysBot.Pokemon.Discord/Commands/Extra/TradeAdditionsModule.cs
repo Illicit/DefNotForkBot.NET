@@ -241,7 +241,7 @@ namespace SysBot.Pokemon.Discord
             }
 
             var c = bot.Bot.Connection;
-            var bytes = await c.Screengrab(token).ConfigureAwait(false);
+            var bytes = await c.Screengrab(token).ConfigureAwait(false) ?? Array.Empty<byte>();
             if (bytes.Length == 1)
             {
                 await ReplyAsync($"Failed to take a screenshot for bot at {address}. Is the bot connected?").ConfigureAwait(false);
@@ -809,11 +809,24 @@ namespace SysBot.Pokemon.Discord
 
             var c = bot.Bot.Connection;
             c.Reset();
-            var bytes = Task.Run(async () => await c.Screengrab(token).ConfigureAwait(false)).Result;
+            var bytes = Task.Run(async () => await c.Screengrab(token).ConfigureAwait(false)).Result ?? Array.Empty<byte>();
             MemoryStream ms = new(bytes);
             var img = "cap.jpg";
             var embed = new EmbedBuilder { ImageUrl = $"attachment://{img}", Color = Color.Purple }.WithFooter(new EmbedFooterBuilder { Text = $"Captured image from bot at address {address}." });
             await Context.Channel.SendFileAsync(ms, img, "", false, embed: embed.Build());
         }
+
+        [Command("setCatchLimit")]
+        [Alias("scl")]
+        [Summary("Set the Catch Limit for Raids in SV.")]
+        [RequireSudo]
+        public async Task SetOffsetIncrement([Summary("Set the Catch Limit for Raids in SV.")] int limit)
+        {
+            int parse = SysCord<T>.Runner.Hub.Config.RaidSV.CatchLimit = limit;
+
+            var msg = $"{Context.User.Mention} Catch Limit for Raids has been set to {parse}.";
+            await ReplyAsync(msg).ConfigureAwait(false);
+        }
+
     }
 }
