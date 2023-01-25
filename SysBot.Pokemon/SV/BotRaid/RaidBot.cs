@@ -376,7 +376,7 @@ namespace SysBot.Pokemon
                 if (val == Settings.CatchLimit + 2 && Settings.CatchLimit != 0) // Hard pity - ban user
                 {
                     Log($"{trainer.OT} is banned because they reached the limit and then canceled {val} more raids with repeated attempts to go over the limit for {Settings.RaidSpecies} on {DateTime.Now}.");
-                    RaiderBanList.List.Add(new() { ID = nid, Name = trainer.OT, Comment = $"{trainer.OT} is banned because they reached the limit and then canceled {val} more raids with repeated attempts to go over the limit for {Settings.RaidSpecies} on {DateTime.Now}." });
+                    RaiderBanList.List.Add(new() { ID = nid, Name = trainer.OT, Comment = $"{Settings.RaidSpecies} {Settings.CatchLimit}/{Settings.CatchLimit} + {val} extra join attempts @ {DateTime.Now}." });
                     blockResult = false;
                 }
             }
