@@ -1,8 +1,5 @@
 ﻿using PKHeX.Core;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 
 namespace SysBot.Pokemon
 {
@@ -30,7 +27,7 @@ namespace SysBot.Pokemon
         public TargetShinyType ShinyTarget { get; set; } = TargetShinyType.DisableOption;
 
         [Category(StopConditions), Description("Stop only on Pokémon that have a mark.")]
-        public bool MarkOnly { get; set; } = false;
+        public bool MarkOnly { get; set; }
 
         [Category(StopConditions), Description("List of marks to ignore separated by commas. Use the full name, e.g. \"Uncommon Mark, Dawn Mark, Prideful Mark\".")]
         public string UnwantedMarks { get; set; } = "";
@@ -43,6 +40,9 @@ namespace SysBot.Pokemon
 
         [Category(StopConditions), Description("If set to TRUE, matches both ShinyTarget and TargetIVs settings. Otherwise, looks for either ShinyTarget or TargetIVs match.")]
         public bool MatchShinyAndIV { get; set; } = true;
+
+        [Category(StopConditions), Description("Enter a Discord channel ID(s) to post shiny result embeds to. Feature has to be initialized via \"$sve\" for EggBotSV or \"$ae\" for ArceusBot after every client restart.")]
+        public string ResultsEmbedChannels { get; set; } = string.Empty;
 
         [Category(StopConditions), Description("If not empty, the provided string will be prepended to the result found log message to Echo alerts for whomever you specify. For Discord, use <@userIDnumber> to mention.")]
         public string MatchFoundEchoMention { get; set; } = string.Empty;

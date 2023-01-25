@@ -4,6 +4,7 @@ using SysBot.Pokemon.SV;
 using System.Collections.Concurrent;
 using System.Text;
 using static SysBot.Base.SwitchButton;
+using static SysBot.Pokemon.RaidSettingsSV;
 
 namespace SysBot.Pokemon
 {
@@ -24,20 +25,20 @@ namespace SysBot.Pokemon
             Settings = hub.Config.RaidSV;
         }
 
-        private const string RaidBotVersion = "Version 0.2.3b";
+        private const string RaidBotVersion = "Version 0.3.1";
         private int RaidsAtStart;
         private int RaidCount;
-        private int ResetCount;
         private int WinCount;
         private int LossCount;
         private readonly Dictionary<ulong, int> RaidTracker = new();
         private SAV9SV HostSAV = new();
         private DateTime StartTime = DateTime.Now;
 
+        private ulong TodaySeed;
         private ulong OverworldOffset;
         private ulong ConnectedOffset;
         private ulong TeraRaidBlockOffset;
-        private readonly ulong[] TeraNIDOffsets = new ulong[3];
+        private readonly ulong[] TeraNIDOffsets = new ulong[3];        
 
         public override async Task MainLoop(CancellationToken token)
         {
@@ -82,11 +83,33 @@ namespace SysBot.Pokemon
             bool partyReady;
             List<(ulong, TradeMyStatus)> lobbyTrainers;
             StartTime = DateTime.Now;
-
+            var dayRoll = 0;
             while (!token.IsCancellationRequested)
             {
                 // Initialize offsets at the start of the routine and cache them.
                 await InitializeSessionOffsets(token).ConfigureAwait(false);
+                if (RaidCount == 0)
+                {
+                    TodaySeed = BitConverter.ToUInt64(await SwitchConnection.ReadBytesAbsoluteAsync(TeraRaidBlockOffset, 8, token).ConfigureAwait(false), 0);
+                    Log($"Starting routine with Today Seed: {TodaySeed:X8}");
+                }
+
+                var currentSeed = BitConverter.ToUInt64(await SwitchConnection.ReadBytesAbsoluteAsync(TeraRaidBlockOffset, 8, token).ConfigureAwait(false), 0);
+                if (TodaySeed != currentSeed)
+                {
+                    if (dayRoll != 0)
+                    {
+                        Log($"Current Today Seed {currentSeed:X8} does not match Starting Today Seed: {TodaySeed:X8} after rolling back 1 day. Stopping routine for lost raid.");
+                        return;
+                    }
+                    Log($"Current Today Seed {currentSeed:X8} does not match Starting Today Seed: {TodaySeed:X8}, attempting dayroll correction.");
+                    await CloseGame(Hub.Config, token).ConfigureAwait(false);
+                    await RolloverCorrectionSV(token).ConfigureAwait(false);
+                    await StartGame(Hub.Config, token).ConfigureAwait(false);
+
+                    dayRoll++;
+                    continue;
+                }
 
                 // Get initial raid counts for comparison later.
                 await CountRaids(null, token).ConfigureAwait(false);
@@ -112,6 +135,13 @@ namespace SysBot.Pokemon
                 {
                     // Should add overworld recovery with a game restart fallback.
                     await RegroupFromBannedUser(token).ConfigureAwait(false);
+
+                    if (!await IsOnOverworld(OverworldOffset, token).ConfigureAwait(false))
+                    {
+                        Log("Something went wrong, attempting to recover.");
+                        await ReOpenGame(Hub.Config, token).ConfigureAwait(false);
+                        continue;
+                    }
 
                     // Clear trainer OTs.
                     Log("Clearing stored OTs");
@@ -173,6 +203,16 @@ namespace SysBot.Pokemon
                             Log($"Player {i + 2} matches lobby check for {trainer.OT}.");
                         else Log($"New Player {i + 2}: {trainer.OT} | TID: {trainer.DisplayTID} | NID: {nid}.");
                     }
+                    var nidDupe = lobbyTrainersFinal.Select(x => x.Item1).ToList();
+                    var dupe = lobbyTrainersFinal.Count > 1 && nidDupe.Distinct().Count() == 1;
+                    if (dupe)
+                    {
+                        // We read bad data, reset game to end early and recover.
+                        var msg = "Oops! Something went wrong, resetting to recover.";
+                        await EnqueueEmbed(null, msg, false, false, false, token).ConfigureAwait(false);
+                        await ReOpenGame(Hub.Config, token).ConfigureAwait(false);
+                        return;
+                    }
 
                     var names = lobbyTrainersFinal.Select(x => x.Item2.OT).ToList();
                     bool hatTrick = lobbyTrainersFinal.Count == 3 && names.Distinct().Count() == 1;
@@ -201,16 +241,7 @@ namespace SysBot.Pokemon
 
             await CountRaids(lobbyTrainersFinal, token).ConfigureAwait(false);
 
-            ResetCount++;
-            await CloseGame(Hub.Config, token).ConfigureAwait(false);
-
-            if (ResetCount == Settings.RollbackTimeAfterThisManyRaids && Settings.RollbackTime)
-            {
-                Log("Applying rollover correction.");
-                await RolloverCorrectionSV(token).ConfigureAwait(false);
-                ResetCount = 0;
-            }
-            await StartGame(Hub.Config, token).ConfigureAwait(false);
+            await ReOpenGame(Hub.Config, token).ConfigureAwait(false);
         }
 
         private void ApplyPenalty(List<(ulong, TradeMyStatus)> trainers)
@@ -238,8 +269,7 @@ namespace SysBot.Pokemon
         private async Task CountRaids(List<(ulong, TradeMyStatus)>? trainers, CancellationToken token)
         {
             List<uint> seeds = new();
-            var data = await SwitchConnection.ReadBytesAbsoluteAsync(TeraRaidBlockOffset, 2304, token).ConfigureAwait(false);
-
+            var data = await SwitchConnection.ReadBytesAbsoluteAsync(TeraRaidBlockOffset + 0x20, 2304, token).ConfigureAwait(false);
             for (int i = 0; i < 69; i++)
             {
                 var seed = BitConverter.ToUInt32(data.Slice(0 + (i * 32), 4));
@@ -309,7 +339,7 @@ namespace SysBot.Pokemon
             {
                 await Click(A, 1_000, token).ConfigureAwait(false);
                 x++;
-                if (x == 30)
+                if (x == 45)
                 {
                     Log("Failed to connect to lobby, restarting game incase we were in battle/bad connection.");
                     await ReOpenGame(Hub.Config, token).ConfigureAwait(false);
@@ -432,7 +462,12 @@ namespace SysBot.Pokemon
 
         private async Task RolloverCorrectionSV(CancellationToken token)
         {
-            // May try to just roll day back if raid is missing instead of rolling time back every X raids
+            var scrollroll = Settings.DateTimeFormat switch
+            {
+                DTFormat.DDMMYY => 0,
+                DTFormat.YYMMDD => 2,
+                _ => 1,
+            };
 
             for (int i = 0; i < 2; i++)
                 await Click(DRIGHT, 0_150, token).ConfigureAwait(false);
@@ -450,20 +485,22 @@ namespace SysBot.Pokemon
             for (int i = 0; i < 2; i++)
                 await Click(DDOWN, 0_150, token).ConfigureAwait(false);
             await Click(A, 0_500, token).ConfigureAwait(false);
-            for (int i = 0; i < 3; i++)// try 1 for Day change instead of 3 for Hour
+            for (int i = 0; i < scrollroll; i++) // 0 to roll day for DDMMYY, 1 to roll day for MMDDYY, 3 to roll hour
                 await Click(DRIGHT, 0_150, token).ConfigureAwait(false);
             await Click(DDOWN, 0_150, token).ConfigureAwait(false);
-            for (int i = 0; i < 4; i++)// try 6 instead of 4 if doing Day for Hour
-                await Click(A, 0_200, token).ConfigureAwait(false);
+            for (int i = 0; i < 8; i++) // Mash DRIGHT to confirm
+                await Click(DRIGHT, 0_200, token).ConfigureAwait(false);
 
+            await Click(A, 0_200, token).ConfigureAwait(false); // Confirm date/time change
             await Click(HOME, 1_000, token).ConfigureAwait(false); // Back to title screen
         }
 
         private async Task RegroupFromBannedUser(CancellationToken token)
         {
-            await Click(B, 1_250, token).ConfigureAwait(false);
+            Log("Attempting to remake lobby..");
+            await Click(B, 2_000, token).ConfigureAwait(false);
             await Click(A, 3_000, token).ConfigureAwait(false);
-            await Click(A, 1_500, token).ConfigureAwait(false);
+            await Click(A, 3_000, token).ConfigureAwait(false);
             await Click(B, 1_000, token).ConfigureAwait(false);
         }
 
@@ -503,7 +540,9 @@ namespace SysBot.Pokemon
                 if (description.Length > 4096)
                     description = description[..4096];
 
-                var bytes = Settings.TakeScreenshot ? await SwitchConnection.Screengrab(token).ConfigureAwait(false) : Array.Empty<byte>();
+                byte[]? bytes = Array.Empty<byte>();
+                if (Settings.TakeScreenshot)
+                    bytes = await SwitchConnection.Screengrab(token).ConfigureAwait(false) ?? Array.Empty<byte>();
                 var embed = new EmbedBuilder()
                 {
                     Title = disband ? "**Raid was disbanded due to a banned user**" : title,
@@ -630,5 +669,6 @@ namespace SysBot.Pokemon
             await Task.Delay(1_000, token).ConfigureAwait(false);
             return true;
         }
+
     }
 }
