@@ -564,7 +564,7 @@ namespace SysBot.Pokemon
                     bytes = await SwitchConnection.Screengrab(token).ConfigureAwait(false) ?? Array.Empty<byte>();
                 var embed = new EmbedBuilder()
                 {
-                    Title = disband ? "**Raid was disbanded due to a banned user**" : title,
+                    Title = disband ? "**Raid cancelled**" : title,
                     Description = disband ? message : !starting ? description + $"᲼\n᲼" : description,
                     Color = disband ? Color.Red : hatTrick ? Color.DarkMagenta : starting ? Color.Purple : Color.Gold,
                     ImageUrl = bytes.Length > 0 ? "attachment://zap.jpg" : default,
