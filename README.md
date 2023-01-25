@@ -1,12 +1,6 @@
 # SysBot.NET
 ![License](https://img.shields.io/badge/License-AGPLv3-blue.svg)
 
-## Support Discords:
-
-For specific support for this fork of ForkBot's fork of kwsch's SysBot.NET repo feel free to join! (No support will be provided in the official PKHeX or PA Discord, please don't bother the devs)
-
-[Support Server: Rosé Garden](https://discord.gg/G23Mx85Mdz)
-
 [USB-Botbase](https://github.com/Koi-3088/USB-Botbase) client for remote USB control for this fork.
 
 [sys-botbase](https://github.com/olliz0r/sys-botbase) client for remote control automation of Nintendo Switch consoles.
