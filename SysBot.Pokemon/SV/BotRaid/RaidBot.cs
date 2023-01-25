@@ -530,7 +530,7 @@ namespace SysBot.Pokemon
                 // IF hatTrick & IF NOT empty names
                 // IF RaidEmbedTitle > 0 & raid starting
                 // IF RaidEmbedTitle > 0
-                var title = hatTrick && names is not null ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedTitle.Length > 0 && starting ? $"**Raid: {RaidCount} Starting! [{rcode}]**" : $"**{Settings.RaidEmbedTitle} [Limit: {Settings.CatchLimit}]**";
+                var title = hatTrick && names is not null && names[0] == "Alice" ? $"**💜💜💜 🪄🎩✨ Thine beloved {names[0]} with the Hat Trick ✨🎩🪄 💜💜💜**" : hatTrick && names is not null && names[0] == "Alice" ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedTitle.Length > 0 && starting ? $"**Raid: {RaidCount} Starting! [{rcode}]**" : $"**{Settings.RaidEmbedTitle} [Limit: {Settings.CatchLimit}]**";
                 if (title.Length > 256)
                     title = title[..256];
 
@@ -553,13 +553,6 @@ namespace SysBot.Pokemon
                     Text = $"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by Drowns#4865"
                 });
 
-                if (!disband && !starting)
-                {
-                    embed.AddField("IVs:", $"{Settings.RaidSpeciesIVs}", true);
-                    embed.AddField("Nature:", $"{Settings.RaidSpeciesNature}", true);
-                    embed.AddField("Ability:", $"{Settings.RaidSpeciesAbility}", true);
-                }
-
                 if (disband)
                 {
                     embed.AddField("Ban Appeal Server", "[Pokemon Automation](https://discord.gg/pokemonautomation)", true);
@@ -568,7 +561,21 @@ namespace SysBot.Pokemon
 
                 if (!disband && names is null && Settings.CodeInInfo)
                 {
-                    embed.AddField("**Waiting in lobby!**", $"Raid code: {rcode}");
+                    if (Settings.CodeIfSplitHidden && rcode.Length == 6)
+                    {
+                        embed.AddField("**Waiting in lobby!**", $"Raid code: ||{rcode.Substring(0, rcode.Length / 2)}||᲼+᲼||{rcode.Substring(rcode.Length / 2)}||");
+                    }
+                    else
+                    {
+                        embed.AddField("**Waiting in lobby!**", $"Raid code: {rcode}");
+                    }
+                }
+
+                if (!disband && !starting)
+                {
+                    embed.AddField("IVs:", $"{Settings.RaidSpeciesIVs}", true);
+                    embed.AddField("Nature:", $"{Settings.RaidSpeciesNature}", true);
+                    embed.AddField("Ability:", $"{Settings.RaidSpeciesAbility}", true);
                 }
 
                 if (!disband && names is not null && starting)
