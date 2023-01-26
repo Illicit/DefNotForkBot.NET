@@ -56,6 +56,9 @@ namespace SysBot.Pokemon
         [Category(Hosting), Description("Minimum amount of seconds to wait before starting a raid.")]
         public int TimeToWait { get; set; } = 90;
 
+        [Category(Hosting), Description("Users NIDs here are Whitelisted raiders.")]
+        public RemoteControlAccessList RaiderWhiteList { get; set; } = new() { AllowIfEmpty = false };
+
         [Category(Hosting), Description("Users NIDs here are banned raiders.")]
         public RemoteControlAccessList RaiderBanList { get; set; } = new() { AllowIfEmpty = false };
 

@@ -17,8 +17,9 @@ namespace SysBot.Pokemon
         public static CancellationTokenSource RaidSVEmbedSource { get; set; } = new();
         public static bool RaidSVEmbedsInitialized { get; set; }
         public static ConcurrentQueue<(byte[]?, EmbedBuilder)> EmbedQueue { get; set; } = new();
+        private RemoteControlAccessList RaiderWhiteList => Settings.RaiderWhiteList;
         private RemoteControlAccessList RaiderBanList => Settings.RaiderBanList;
-
+        
         public RaidSV(PokeBotState cfg, PokeTradeHub<PK9> hub) : base(cfg)
         {
             Hub = hub;
@@ -250,14 +251,14 @@ namespace SysBot.Pokemon
             {
                 var nid = trainers[i].Item1;
                 var name = trainers[i].Item2.OT;
-                if (RaidTracker.ContainsKey(nid) && nid != 0)
+                if (RaidTracker.ContainsKey(nid) && nid != 0 && !RaiderWhiteList.Contains(nid))
                 {
                     var entry = RaidTracker[nid];
                     var Count = entry + 1;
                     RaidTracker[nid] = Count;
                     Log($"Player: {name} completed the raid with Catch Count: {Count}.");
 
-                    if (Settings.CatchLimit != 0 && Count == Settings.CatchLimit)                 
+                    if (Settings.CatchLimit != 0 && Count == Settings.CatchLimit)              
                         Log($"Player: {name} has met the catch limit {Count}/{Settings.CatchLimit}, adding to the block list for this session for {Settings.RaidSpecies} on {DateTime.Now}.");
 
                 }
@@ -439,6 +440,7 @@ namespace SysBot.Pokemon
                         trainer = await GetTradePartnerMyStatus(pointer, token).ConfigureAwait(false);
                     }
 
+
                     if (nid != 0 && !string.IsNullOrWhiteSpace(trainer.OT))
                     {
                         if (await CheckIfTrainerBanned(trainer, nid, player, updateBanList, token).ConfigureAwait(false))
@@ -447,6 +449,15 @@ namespace SysBot.Pokemon
                         updateBanList = false;
                     }
 
+                    /*if (nid != 0 && !string.IsNullOrWhiteSpace(trainer.OT) && !Whitelisted)
+                    {
+                        if (await CheckIfTrainerBanned(trainer, nid, player, updateBanList, token).ConfigureAwait(false))
+                            return (false, lobbyTrainers);
+
+                        updateBanList = false;
+                    } else if (Whitelisted) {
+                        Log($"Whitelisted Player {player}: {trainer.OT} | TID: {trainer.DisplayTID} | NID: {nid} joined!");
+                    }*/
                     if (lobbyTrainers.FirstOrDefault(x => x.Item1 == nid) != default && trainer.OT.Length > 0)
                         lobbyTrainers[i] = (nid, trainer);
                     else if (nid > 0 && trainer.OT.Length > 0)
