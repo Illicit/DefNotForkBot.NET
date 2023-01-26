@@ -449,15 +449,6 @@ namespace SysBot.Pokemon
                         updateBanList = false;
                     }
 
-                    /*if (nid != 0 && !string.IsNullOrWhiteSpace(trainer.OT) && !Whitelisted)
-                    {
-                        if (await CheckIfTrainerBanned(trainer, nid, player, updateBanList, token).ConfigureAwait(false))
-                            return (false, lobbyTrainers);
-
-                        updateBanList = false;
-                    } else if (Whitelisted) {
-                        Log($"Whitelisted Player {player}: {trainer.OT} | TID: {trainer.DisplayTID} | NID: {nid} joined!");
-                    }*/
                     if (lobbyTrainers.FirstOrDefault(x => x.Item1 == nid) != default && trainer.OT.Length > 0)
                         lobbyTrainers[i] = (nid, trainer);
                     else if (nid > 0 && trainer.OT.Length > 0)
@@ -562,7 +553,7 @@ namespace SysBot.Pokemon
                 // IF hatTrick & IF NOT empty names
                 // IF RaidEmbedTitle > 0 & raid starting
                 // IF RaidEmbedTitle > 0
-                var title = hatTrick && names is not null && names[0] == "Alice" ? $"**💜💜💜 🪄🎩✨ Thine beloved {names[0]} with the Hat Trick ✨🎩🪄 💜💜💜**" : hatTrick && names is not null && names[0] == "Alice" ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedTitle.Length > 0 && starting ? $"**Raid: {RaidCount} Starting! [{rcode}]**" : $"**{Settings.RaidEmbedTitle} [Limit: {Settings.CatchLimit}]**";
+                var title = hatTrick && names is not null && names[0] == "Alice" ? $"**💜💜💜 🪄🎩✨ Thine beloved {names[0]} with the Hat Trick ✨🎩🪄 💜💜💜**" : hatTrick && names is not null && names[0] == "Alice" ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedTitle.Length > 0 && starting ? $"**Raid: {RaidCount} Starting! [{rcode}]**" : $"**{Settings.RaidEmbedTitle}**";
                 if (title.Length > 256)
                     title = title[..256];
 
@@ -577,7 +568,7 @@ namespace SysBot.Pokemon
                 var embed = new EmbedBuilder()
                 {
                     Title = disband ? "**Raid cancelled**" : title,
-                    Description = disband ? message : !starting ? description + $"᲼\n᲼" : description,
+                    Description = disband ? message : !starting ? description + $"**LIMIT: {Settings.CatchLimit}**\n**リミット: {Settings.CatchLimit}**\n**极限: {Settings.CatchLimit}**᲼\n᲼" : description,
                     Color = disband ? Color.Red : hatTrick ? Color.DarkMagenta : starting ? Color.Purple : Color.Gold,
                     ImageUrl = bytes.Length > 0 ? "attachment://zap.jpg" : default,
                 }.WithFooter(new EmbedFooterBuilder()
