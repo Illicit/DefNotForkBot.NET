@@ -361,42 +361,46 @@ namespace SysBot.Pokemon
         private async Task<bool> CheckIfTrainerBanned(TradeMyStatus trainer, ulong nid, int player, bool updateBanList, CancellationToken token)
         {
             Log($"Player {player}: {trainer.OT} | TID: {trainer.DisplayTID} | NID: {nid}");
-            if (!RaidTracker.ContainsKey(nid))
-                RaidTracker.Add(nid, 0);
 
-            bool blockResult = false;
-            var blockCheck = RaidTracker.ContainsKey(nid);
-            if (blockCheck)
+            if (!RaiderWhiteList.Contains(nid))
             {
-                RaidTracker.TryGetValue(nid, out int val);
-                if (val >= Settings.CatchLimit && Settings.CatchLimit != 0) // Soft pity - block user
+                if (!RaidTracker.ContainsKey(nid))
+                    RaidTracker.Add(nid, 0);
+
+                bool blockResult = false;
+                var blockCheck = RaidTracker.ContainsKey(nid);
+                if (blockCheck)
                 {
-                    blockResult = true;
-                    RaidTracker[nid] = val + 1;
+                    RaidTracker.TryGetValue(nid, out int val);
+                    if (val >= Settings.CatchLimit && Settings.CatchLimit != 0) // Soft pity - block user
+                    {
+                        blockResult = true;
+                        RaidTracker[nid] = val + 1;
+                    }
+                    if (val == Settings.CatchLimit + 2 && Settings.CatchLimit != 0) // Hard pity - ban user
+                    {
+                        Log($"{trainer.OT} is banned because they reached the limit and then canceled {val} more raids with repeated attempts to go over the limit for {Settings.RaidSpecies} on {DateTime.Now}.");
+                        RaiderBanList.List.Add(new() { ID = nid, Name = trainer.OT, Comment = $"{Settings.RaidSpecies} {Settings.CatchLimit}/{Settings.CatchLimit} + {val} extra join attempts @ {DateTime.Now}." });
+                        blockResult = false;
+                    }
                 }
-                if (val == Settings.CatchLimit + 2 && Settings.CatchLimit != 0) // Hard pity - ban user
+                var banResultCC = Settings.RaidsBetweenUpdate == -1 ? (false, "") : await BanService.IsRaiderBanned(trainer.OT, Settings.BanListURL, Connection.Label, updateBanList).ConfigureAwait(false);
+                var banResultCFW = RaiderBanList.List.FirstOrDefault(x => x.ID == nid);
+
+                bool isBanned = banResultCC.Item1 || banResultCFW != default || blockResult;
+                if (isBanned)
                 {
-                    Log($"{trainer.OT} is banned because they reached the limit and then canceled {val} more raids with repeated attempts to go over the limit for {Settings.RaidSpecies} on {DateTime.Now}.");
-                    RaiderBanList.List.Add(new() { ID = nid, Name = trainer.OT, Comment = $"{Settings.RaidSpecies} {Settings.CatchLimit}/{Settings.CatchLimit} + {val} extra join attempts @ {DateTime.Now}." });
-                    blockResult = false;
+                    var msg = string.Empty;
+                    if (!blockResult)
+                        msg = banResultCC.Item1 ? banResultCC.Item2 : $"{banResultCFW!.Name} was found in the host's ban list.\n{banResultCFW.Comment}";
+                    else
+                        msg = $"{trainer.OT} has already reached the catch limit. Please do not join again. Repeated attempts to join like this will result in a ban from future raids.";
+
+                    Log(msg);
+
+                    await EnqueueEmbed(null, msg, false, true, false, token).ConfigureAwait(false);
+                    return true;
                 }
-            }
-            var banResultCC = Settings.RaidsBetweenUpdate == -1 ? (false, "") : await BanService.IsRaiderBanned(trainer.OT, Settings.BanListURL, Connection.Label, updateBanList).ConfigureAwait(false);
-            var banResultCFW = RaiderBanList.List.FirstOrDefault(x => x.ID == nid);
-
-            bool isBanned = banResultCC.Item1 || banResultCFW != default || blockResult;
-            if (isBanned)
-            {
-                var msg = string.Empty;
-                if (!blockResult)
-                    msg = banResultCC.Item1 ? banResultCC.Item2 : $"{banResultCFW!.Name} was found in the host's ban list.\n{banResultCFW.Comment}";
-                else
-                    msg = $"{trainer.OT} has already reached the catch limit. Please do not join again. Repeated attempts to join like this will result in a ban from future raids.";
-
-                Log(msg);
-
-                await EnqueueEmbed(null, msg, false, true, false, token).ConfigureAwait(false);
-                return true;
             }
 
             return false;
