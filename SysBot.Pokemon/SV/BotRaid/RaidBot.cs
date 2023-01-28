@@ -362,8 +362,10 @@ namespace SysBot.Pokemon
         {
             Log($"Player {player}: {trainer.OT} | TID: {trainer.DisplayTID} | NID: {nid}");
 
-            if (!RaiderWhiteList.Contains(nid))
+            if (RaiderWhiteList.Contains(nid))
             {
+                Log($"Player {player}: {trainer.OT} | NID: {nid} is whitelisted");
+            } else {
                 if (!RaidTracker.ContainsKey(nid))
                     RaidTracker.Add(nid, 0);
 
@@ -381,6 +383,7 @@ namespace SysBot.Pokemon
                     {
                         Log($"{trainer.OT} is banned because they reached the limit and then canceled {val} more raids with repeated attempts to go over the limit for {Settings.RaidSpecies} on {DateTime.Now}.");
                         RaiderBanList.List.Add(new() { ID = nid, Name = trainer.OT, Comment = $"{Settings.RaidSpecies} {Settings.CatchLimit}/{Settings.CatchLimit} + {val} extra join attempts @ {DateTime.Now}." });
+                        RaidTracker.Remove(nid);
                         blockResult = false;
                     }
                 }
