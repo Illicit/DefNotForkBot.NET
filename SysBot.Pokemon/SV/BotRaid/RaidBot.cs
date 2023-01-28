@@ -565,7 +565,7 @@ namespace SysBot.Pokemon
                     title = title[..256];
 
                 // Description can only be up to 4096 characters.
-                var description = Settings.RaidEmbedDescription.Length > 0 ? string.Join("\n", Settings.RaidEmbedDescription) : "";
+                var description = Settings.RaidEmbedDescription.Length > 0 ? string.Join("\n", Settings.RaidEmbedDescription, "\n\n") : "";
                 if (description.Length > 4096)
                     description = description[..4096];
 
