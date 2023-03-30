@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Discord.WebSocket;
 using System.Collections;
+using System.Reflection;
 
 namespace SysBot.Pokemon.Discord
 {
@@ -164,7 +165,7 @@ namespace SysBot.Pokemon.Discord
             var la = new LegalityAnalysis(pkm);
             if (Info.Hub.Config.Trade.Memes && await TrollAsync(Context, pkm is not T || !la.Valid, pkm, true).ConfigureAwait(false))
                 return;
-
+            
             if (pkm is not T pk || !la.Valid)
             {
                 var reason = result == "Timeout" ? "That set took too long to generate." : "I wasn't able to create something from that.";
@@ -212,7 +213,7 @@ namespace SysBot.Pokemon.Discord
             var la = new LegalityAnalysis(pkm);
             if (Info.Hub.Config.Trade.Memes && await TrollAsync(Context, pkm is not T || !la.Valid, pkm).ConfigureAwait(false))
                 return;
-
+            
             if (pkm is not T pk || !la.Valid)
             {
                 var reason = result == "Timeout" ? "That set took too long to generate." : "I wasn't able to create something from that.";
@@ -251,8 +252,8 @@ namespace SysBot.Pokemon.Discord
             MemoryStream ms = new(bytes);
 
             var img = "cap.jpg";
-            var embed = new EmbedBuilder { ImageUrl = $"attachment://{img}", Color = Color.Purple }.WithFooter(new EmbedFooterBuilder { Text = $"Captured image from bot at address {address}." });
-            await Context.Channel.SendFileAsync(ms, img, "", false, embed: embed.Build());
+            var embed = new EmbedBuilder{ ImageUrl = $"attachment://{img}", Color = Color.Purple }.WithFooter(new EmbedFooterBuilder { Text = $"Captured image from bot at address {address}." });
+            await Context.Channel.SendFileAsync(ms, img, "", false, embed : embed.Build());
         }
 
         [Command("hunt")]
@@ -552,7 +553,7 @@ namespace SysBot.Pokemon.Discord
 
                         string stats;
                         if (Hub.Config.ArceusLA.SpeciesToHunt.Length == 0 || mon.IVTotal != 0)
-                            stats = $"{(mon.ShinyXor == 0 ? "■ - " : mon.ShinyXor <= 16 ? "★ - " : "")}{SpeciesName.GetSpeciesNameGeneration(mon.Species, 2, 8)}{TradeExtensions<T>.FormOutput(mon.Species, mon.Form, out _)}\nIVs: {string.Join("/", mon.IVs)}";
+                            stats = $"{(mon.ShinyXor == 0 ? "■ - " : mon.ShinyXor <= 16 ? "★ - " : "")}{SpeciesName.GetSpeciesNameGeneration(mon.Species, 2, 8)}{TradeExtensions<T>.FormOutput(mon.Species, mon.Form, out _)}\nIVs: {string.Join("/", mon.IVs)}\nNature: {(Nature)mon.Nature}";
                         else
                         {
                             stats = "Hunting for a special Alpha!";
@@ -561,6 +562,11 @@ namespace SysBot.Pokemon.Discord
 
                         if (mon.IsAlpha)
                             shinyurl = "https://cdn.discordapp.com/emojis/944278189000228894.webp?size=96&quality=lossless";
+
+                        if (mons[i].Item2)
+                            shinyurl = "https://i.imgur.com/T8vEiIk.jpg";
+                        else
+                            shinyurl = $"https://i.imgur.com/t2M8qF4.png";
 
                         var author = new EmbedAuthorBuilder { IconUrl = shinyurl, Name = msg };
                         var footer = new EmbedFooterBuilder
@@ -572,6 +578,8 @@ namespace SysBot.Pokemon.Discord
                                 ArceusMode.MassiveOutbreakHunter when (Species)mon.Species is Species.Shieldon or Species.Bastiodon or Species.Cranidos or Species.Rampardos or Species.Scizor or Species.Sneasel or
                                 Species.Weavile or Species.Magnemite or Species.Magneton or Species.Magnezone or Species.Sylveon or Species.Leafeon or Species.Glaceon or Species.Flareon or Species.Jolteon or Species.Vaporeon
                                 or Species.Umbreon or Species.Espeon => "Found in a space-time distortion.",
+                                ArceusMode.GenieScanner => "Found a genie in a cloud",
+                                ArceusMode.ManaphyReset => "Found a in a cave",
                                 _ => "Found in a massive mass outbreak.",
                             }
                         };
@@ -669,7 +677,7 @@ namespace SysBot.Pokemon.Discord
                 {
                     var img = "zap.jpg";
                     var turl = string.Empty;
-                    var form = string.Empty;
+                    var form = string.Empty;                    
                     PK9 pk = new()
                     {
                         Species = (ushort)RaidSettingsSV.RaidSpecies,
@@ -711,8 +719,8 @@ namespace SysBot.Pokemon.Discord
             }
         }
 
-        [Command("SVEmbed")]
-        [Alias("svem", "sve")]
+        [Command("SVEgg")]
+        [Alias("sve")]
         [Summary("Initialize posting of SV shiny result embeds to specified Discord channels.")]
         [RequireSudo]
         public async Task InitializeEmbedsSV()
@@ -736,7 +744,7 @@ namespace SysBot.Pokemon.Discord
                 return;
             }
 
-            await ReplyAsync(!EggBotSV.EmbedsInitialized ? "Scarlet | Violet Embed task started!" : "Scarlet | Violet Embed task stopped!").ConfigureAwait(false);
+            await ReplyAsync(!EggBotSV.EmbedsInitialized ? "Scarlet | Violet Egg Embed task started!" : "Scarlet | Violet Egg Embed task stopped!").ConfigureAwait(false);
             if (EggBotSV.EmbedsInitialized)
                 EggBotSV.EmbedSource.Cancel();
             else _ = Task.Run(async () => await SVEmbedLoop(channels));
@@ -751,7 +759,7 @@ namespace SysBot.Pokemon.Discord
                 if (EggBotSV.EmbedMon.Item1 != null)
                 {
                     var url = TradeExtensions<PK9>.PokeImg(EggBotSV.EmbedMon.Item1, false, false);
-                    var is1of100 = (Species)EggBotSV.EmbedMon.Item1.Species is Species.Dunsparce or Species.Maushold;
+                    var is1of100 = (Species)EggBotSV.EmbedMon.Item1.Species is Species.Dunsparce or Species.Tandemaus;
                     var spec = string.Empty;
                     if (is1of100)
                     {
@@ -770,12 +778,12 @@ namespace SysBot.Pokemon.Discord
                                 spec = "\nFamily of 4";
                         }
                     }
-
+                    var size = $"\nScale: {PokeSizeDetailedUtil.GetSizeRating(EggBotSV.EmbedMon.Item1.Scale)}";
                     var gender = EggBotSV.EmbedMon.Item1.Gender == 0 ? " - (M)" : EggBotSV.EmbedMon.Item1.Gender == 1 ? " - (F)" : "";
 
-                    var description = $"{(EggBotSV.EmbedMon.Item1.ShinyXor == 0 ? "■ - " : EggBotSV.EmbedMon.Item1.ShinyXor <= 16 ? "★ - " : "")}{SpeciesName.GetSpeciesNameGeneration(EggBotSV.EmbedMon.Item1.Species, 2, 8)}{TradeExtensions<T>.FormOutput(EggBotSV.EmbedMon.Item1.Species, EggBotSV.EmbedMon.Item1.Form, out _)}{gender}{spec}\nIVs: {EggBotSV.EmbedMon.Item1.IV_HP}/{EggBotSV.EmbedMon.Item1.IV_ATK}/{EggBotSV.EmbedMon.Item1.IV_DEF}/{EggBotSV.EmbedMon.Item1.IV_SPA}/{EggBotSV.EmbedMon.Item1.IV_SPD}/{EggBotSV.EmbedMon.Item1.IV_SPE}";
+                    var description = $"{(EggBotSV.EmbedMon.Item1.ShinyXor == 0 ? "■ - " : EggBotSV.EmbedMon.Item1.ShinyXor <= 16 ? "★ - " : "")}{SpeciesName.GetSpeciesNameGeneration(EggBotSV.EmbedMon.Item1.Species, 2, 8)}{TradeExtensions<T>.FormOutput(EggBotSV.EmbedMon.Item1.Species, EggBotSV.EmbedMon.Item1.Form, out _)}{gender}{spec}\nIVs: {EggBotSV.EmbedMon.Item1.IV_HP}/{EggBotSV.EmbedMon.Item1.IV_ATK}/{EggBotSV.EmbedMon.Item1.IV_DEF}/{EggBotSV.EmbedMon.Item1.IV_SPA}/{EggBotSV.EmbedMon.Item1.IV_SPD}/{EggBotSV.EmbedMon.Item1.IV_SPE}{size}";
                     if (SysCord<T>.Runner.Hub.Config.StopConditions.ShinyTarget == TargetShinyType.NonShiny)
-                        description = $"{SpeciesName.GetSpeciesNameGeneration(EggBotSV.EmbedMon.Item1.Species, 2, 8)}{TradeExtensions<T>.FormOutput(EggBotSV.EmbedMon.Item1.Species, EggBotSV.EmbedMon.Item1.Form, out _)}{gender}{spec}\nIVs: {EggBotSV.EmbedMon.Item1.IV_HP}/{EggBotSV.EmbedMon.Item1.IV_ATK}/{EggBotSV.EmbedMon.Item1.IV_DEF}/{EggBotSV.EmbedMon.Item1.IV_SPA}/{EggBotSV.EmbedMon.Item1.IV_SPD}/{EggBotSV.EmbedMon.Item1.IV_SPE}";
+                        description = $"{SpeciesName.GetSpeciesNameGeneration(EggBotSV.EmbedMon.Item1.Species, 2, 8)}{TradeExtensions<T>.FormOutput(EggBotSV.EmbedMon.Item1.Species, EggBotSV.EmbedMon.Item1.Form, out _)}{gender}{spec}\nIVs: {EggBotSV.EmbedMon.Item1.IV_HP}/{EggBotSV.EmbedMon.Item1.IV_ATK}/{EggBotSV.EmbedMon.Item1.IV_DEF}/{EggBotSV.EmbedMon.Item1.IV_SPA}/{EggBotSV.EmbedMon.Item1.IV_SPD}/{EggBotSV.EmbedMon.Item1.IV_SPE}{size}";
 
                     var markurl = string.Empty;
                     if (EggBotSV.EmbedMon.Item2)
@@ -812,6 +820,14 @@ namespace SysBot.Pokemon.Discord
             }
             EggBotSV.EmbedSource = new();
         }
+
+        public static readonly string[] MarkTitle =
+{
+            " the Peckish"," the Sleepy"," the Dozy"," the Early Riser"," the Cloud Watcher"," the Sodden"," the Thunderstruck"," the Snow Frolicker"," the Shivering"," the Parched"," the Sandswept"," the Mist Drifter",
+            " the Chosen One"," the Catch of the Day"," the Curry Connoisseur"," the Sociable"," the Recluse"," the Rowdy"," the Spacey"," the Anxious"," the Giddy"," the Radiant"," the Serene"," the Feisty"," the Daydreamer",
+            " the Joyful"," the Furious"," the Beaming"," the Teary-Eyed"," the Chipper"," the Grumpy"," the Scholar"," the Rampaging"," the Opportunist"," the Stern"," the Kindhearted"," the Easily Flustered"," the Driven",
+            " the Apathetic"," the Arrogant"," the Reluctant"," the Humble"," the Pompous"," the Lively"," the Worn-Out",
+        };
 
         [Command("repeek")]
         [Summary("Take and send a screenshot from the specified Switch.")]

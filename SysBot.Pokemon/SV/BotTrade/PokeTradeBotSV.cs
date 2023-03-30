@@ -58,8 +58,8 @@ namespace SysBot.Pokemon
 
         // Store the current save's OT and TID/SID for comparison.
         private string OT = string.Empty;
-        private int DisplaySID;
-        private int DisplayTID;
+        private uint DisplaySID;
+        private uint DisplayTID;
 
         // Stores whether we returned all the way to the overworld, which repositions the cursor.
         private bool StartFromOverworld = true;
@@ -118,7 +118,8 @@ namespace SysBot.Pokemon
                 }
                 catch (SocketException e)
                 {
-                    Connection.LogError(e.StackTrace);
+                    if (e.StackTrace != null)
+                        Connection.LogError(e.StackTrace);
                     var attempts = Hub.Config.Timings.ReconnectAttempts;
                     var delay = Hub.Config.Timings.ExtraReconnectDelay;
                     var protocol = Config.Connection.Protocol;
@@ -239,14 +240,14 @@ namespace SysBot.Pokemon
             if (!StartFromOverworld && !await IsConnectedOnline(ConnectedOffset, token).ConfigureAwait(false))
             {
                 await RecoverToOverworld(token).ConfigureAwait(false);
-                if (!await ConnectAndEnterPortal(Hub.Config, token).ConfigureAwait(false))
+                if (!await ConnectAndEnterPortal(token).ConfigureAwait(false))
                 {
                     await RecoverToOverworld(token).ConfigureAwait(false);
                     return PokeTradeResult.RecoverStart;
                 }
             }
 
-            else if (StartFromOverworld && !await ConnectAndEnterPortal(Hub.Config, token).ConfigureAwait(false))
+            else if (StartFromOverworld && !await ConnectAndEnterPortal(token).ConfigureAwait(false))
             {
                 await RecoverToOverworld(token).ConfigureAwait(false);
                 return PokeTradeResult.RecoverStart;
@@ -548,7 +549,7 @@ namespace SysBot.Pokemon
 
         // Should be used from the overworld. Opens X menu, attempts to connect online, and enters the Portal.
         // The cursor should be positioned over Link Trade.
-        private async Task<bool> ConnectAndEnterPortal(PokeTradeHubConfig config, CancellationToken token)
+        private async Task<bool> ConnectAndEnterPortal(CancellationToken token)
         {
             if (!await IsOnOverworld(OverworldOffset, token).ConfigureAwait(false))
                 await RecoverToOverworld(token).ConfigureAwait(false);
@@ -558,16 +559,18 @@ namespace SysBot.Pokemon
             // Open the X Menu.
             await Click(X, 1_000, token).ConfigureAwait(false);
 
-            // Connect online if not already.
-            if (!await ConnectToOnline(config, token).ConfigureAwait(false))
+            // Handle the news popping up.
+            if (await SwitchConnection.IsProgramRunning(LibAppletWeID, token).ConfigureAwait(false))
             {
-                Log("Failed to connect to online.");
-                return false; // Failed, either due to connection or softban.
+                Log("News detected, will close once it's loaded!");
+                await Task.Delay(5_000, token).ConfigureAwait(false);
+                await Click(B, 2_000, token).ConfigureAwait(false);
             }
 
-            // Make sure we're at the bottom of the Main Menu.
+            // Scroll to the bottom of the Main Menu so we don't need to care if Picnic is unlocked.
             await Click(DRIGHT, 0_300, token).ConfigureAwait(false);
             await PressAndHold(DDOWN, 1_000, 1_000, token).ConfigureAwait(false);
+            await Click(DUP, 0_200, token).ConfigureAwait(false);
             await Click(DUP, 0_200, token).ConfigureAwait(false);
             await Click(DUP, 0_200, token).ConfigureAwait(false);
             await Click(A, 1_000, token).ConfigureAwait(false);
@@ -576,13 +579,28 @@ namespace SysBot.Pokemon
             return true;
         }
 
-        // Waits for the Portal to load (slow) and then moves the cursor down to link trade.
-        private async Task SetUpPortalCursor(CancellationToken token)
+        // Waits for the Portal to load (slow) and then moves the cursor down to Link Trade.
+        private async Task<bool> SetUpPortalCursor(CancellationToken token)
         {
             // Wait for the portal to load.
+            var attempts = 0;
             while (!await IsInPokePortal(PortalOffset, token).ConfigureAwait(false))
+            {
                 await Task.Delay(0_500, token).ConfigureAwait(false);
+                if (++attempts > 20)
+                {
+                    Log("Failed to load the Poké Portal.");
+                    return false;
+                }
+            }
             await Task.Delay(2_000 + Hub.Config.Timings.ExtraTimeLoadPortal, token).ConfigureAwait(false);
+
+            // Connect online if not already.
+            if (!await ConnectToOnline(Hub.Config, token).ConfigureAwait(false))
+            {
+                Log("Failed to connect to online.");
+                return false; // Failed, either due to connection or softban.
+            }
 
             // Handle the news popping up.
             if (await SwitchConnection.IsProgramRunning(LibAppletWeID, token).ConfigureAwait(false))
@@ -591,11 +609,11 @@ namespace SysBot.Pokemon
                 await Task.Delay(5_000, token).ConfigureAwait(false);
                 await Click(B, 2_000 + Hub.Config.Timings.ExtraTimeLoadPortal, token).ConfigureAwait(false);
             }
-
             Log("Adjusting the cursor in the Portal.");
             // Move down to Link Trade.
             await Click(DDOWN, 0_300, token).ConfigureAwait(false);
             await Click(DDOWN, 0_300, token).ConfigureAwait(false);
+            return true;
         }
 
         // Connects online if not already. Assumes the user to be in the X menu to avoid a news screen.
@@ -604,7 +622,8 @@ namespace SysBot.Pokemon
             if (await IsConnectedOnline(ConnectedOffset, token).ConfigureAwait(false))
                 return true;
 
-            await Click(L, 5_000, token).ConfigureAwait(false);
+            await Click(L, 1_000, token).ConfigureAwait(false);
+            await Click(A, 4_000, token).ConfigureAwait(false);
 
             var wait = 0;
             while (!await IsConnectedOnline(ConnectedOffset, token).ConfigureAwait(false))
@@ -660,7 +679,7 @@ namespace SysBot.Pokemon
                 {
                     Log("Failed to exit box, rebooting the game.");
                     await RestartGameSV(token).ConfigureAwait(false);
-                    await ConnectAndEnterPortal(Hub.Config, token).ConfigureAwait(false);
+                    await ConnectAndEnterPortal(token).ConfigureAwait(false);
                     return;
                 }
             }
@@ -679,7 +698,7 @@ namespace SysBot.Pokemon
                 {
                     Log("Failed to load the portal, rebooting the game.");
                     await RestartGameSV(token).ConfigureAwait(false);
-                    await ConnectAndEnterPortal(Hub.Config, token).ConfigureAwait(false);
+                    await ConnectAndEnterPortal(token).ConfigureAwait(false);
                     return;
                 }
             }
@@ -746,6 +765,14 @@ namespace SysBot.Pokemon
 
                 ctr++;
                 var msg = Hub.Config.Trade.DumpTradeLegalityCheck ? verbose : $"File {ctr}";
+
+                // Extra information about trainer data for people requesting with their own trainer data.
+                var ot = pk.OT_Name;
+                var ot_gender = pk.OT_Gender == 0 ? "Male" : "Female";
+                var tid = pk.GetDisplayTID().ToString(pk.GetTrainerIDFormat().GetTrainerIDFormatStringTID());
+                var sid = pk.GetDisplaySID().ToString(pk.GetTrainerIDFormat().GetTrainerIDFormatStringSID());
+                msg += $"\n**Trainer Data**\n```OT: {ot}\nOTGender: {ot_gender}\nTID: {tid}\nSID: {sid}```";
+
                 // Extra information for shiny eggs, because of people dumping to skip hatching.
                 var eggstring = pk.IsEgg ? "Egg " : string.Empty;
                 msg += pk.IsShiny ? $"\n**This Pokémon {eggstring}is shiny!**" : string.Empty;
@@ -802,7 +829,7 @@ namespace SysBot.Pokemon
                 return (offered, PokeTradeResult.IllegalTrade);
             }
 
-            var clone = (PK9)offered.Clone();
+            var clone = offered.Clone();
             if (Hub.Config.Legality.ResetHOMETracker)
                 clone.Tracker = 0;
 
@@ -873,7 +900,7 @@ namespace SysBot.Pokemon
             if (clone.FatefulEncounter)
             {
                 clone.SetDefaultNickname(laInit);
-                var info = new SimpleTrainerInfo { Gender = clone.OT_Gender, Language = clone.Language, OT = name, TID = clone.TID, SID = clone.SID, Generation = 9 };
+                var info = new SimpleTrainerInfo { Gender = clone.OT_Gender, Language = clone.Language, OT = name, TID16 = clone.TID16, SID16 = clone.SID16, Generation = 9 };
                 var mg = EncounterEvent.GetAllEvents().Where(x => x.Species == clone.Species && x.Form == clone.Form && x.IsShiny == clone.IsShiny && x.OT_Name == clone.OT_Name).ToList();
                 if (mg.Count > 0)
                     clone = TradeExtensions<PK9>.CherishHandler(mg.First(), info);
@@ -1070,10 +1097,10 @@ namespace SysBot.Pokemon
             var previous = isDistribution
                 ? list.TryRegister(TrainerNID, TrainerName)
                 : list.TryRegister(TrainerNID, TrainerName, poke.Trainer.ID);
-            if (previous != null && previous.NetworkID != TrainerNID && !isDistribution)
+            if (previous != null && previous.NetworkID == TrainerNID && previous.RemoteID != user.ID && !isDistribution)
             {
                 var delta = DateTime.Now - previous.Time;
-                if (delta > TimeSpan.FromMinutes(AbuseSettings.TradeAbuseExpiration) && AbuseSettings.TradeAbuseAction != TradeAbuseAction.Ignore)
+                if (delta < TimeSpan.FromMinutes(AbuseSettings.TradeAbuseExpiration) && AbuseSettings.TradeAbuseAction != TradeAbuseAction.Ignore)
                 {
                     if (AbuseSettings.TradeAbuseAction == TradeAbuseAction.BlockAndQuit)
                     {

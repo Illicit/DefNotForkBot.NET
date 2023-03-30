@@ -1,4 +1,5 @@
 ﻿using PKHeX.Core;
+using PKHeX.Core.AutoMod;
 using System;
 using System.Linq;
 using System.Diagnostics;
@@ -81,7 +82,7 @@ namespace SysBot.Pokemon
 
                     var current = Process.GetCurrentProcess();
                     var all = Process.GetProcessesByName(current.ProcessName);
-                    bool sameExe = all.Count(x => x.MainModule.FileName == current.MainModule.FileName) > 1;
+                    bool sameExe = all.Count(x => x.MainModule?.FileName == current.MainModule?.FileName) > 1;
                     if (!sameExe)
                         TCInitialized = true;
                     else
@@ -262,7 +263,7 @@ namespace SysBot.Pokemon
                     result.SQLCommands.Add(DBCommandConstructor("trainerinfo", "ot = ?", "where user_id = ?", names, obj, SQLTableContext.Update));
                 }
 
-                var trainerInfo = user.TrainerInfo.ToStringArray();
+                var trainerInfo = TrainerInfoToStringArray(user.TrainerInfo, Game);
                 if (Rng.EggRNG >= 100 - Settings.EggRate && canGenerate)
                 {
                     result.EggPoke = EggProcess(user.Daycare, evos, balls, 8, trainerInfo, out eggMsg);
@@ -290,7 +291,7 @@ namespace SysBot.Pokemon
                             Rng.SpeciesRNG = keys[Random.Next(Dex.Count)];
                     }
 
-                    DateTime.TryParse(Settings.EventEnd, out DateTime endTime);
+                    _ = DateTime.TryParse(Settings.EventEnd, out DateTime endTime);
                     bool ended = endTime != default && DateTime.Now > endTime;
                     bool boostProc = user.Perks.SpeciesBoost != 0 && Rng.SpeciesBoostRNG >= 99;
                     MysteryGift? mg = default;
@@ -307,9 +308,9 @@ namespace SysBot.Pokemon
                         var mgRng = mg == default ? MysteryGiftRng(Settings) : mg;
                         if (mgRng != default)
                         {
-                            Enum.TryParse(user.TrainerInfo.OTGender, out Gender gender);
-                            Enum.TryParse(user.TrainerInfo.Language, out LanguageID language);
-                            var info = new SimpleTrainerInfo { Gender = (int)gender, Language = (int)language, OT = user.TrainerInfo.OTName, TID = user.TrainerInfo.TID, SID = user.TrainerInfo.SID, Context = Game is GameVersion.BDSP ? EntityContext.Gen8b : EntityContext.Gen8, Generation = format };
+                            _ = Enum.TryParse(user.TrainerInfo.OTGender, out Gender gender);
+                            _ = Enum.TryParse(user.TrainerInfo.Language, out LanguageID language);
+                            var info = new SimpleTrainerInfo { Gender = (int)gender, Language = (int)language, OT = user.TrainerInfo.OTName, TID16 = user.TrainerInfo.TID16, SID16 = user.TrainerInfo.SID16, Context = Game is GameVersion.BDSP ? EntityContext.Gen8b : EntityContext.Gen8, Generation = format };
                             result.Poke = TradeExtensions<T>.CherishHandler(mgRng, info);
                         }
                     }
@@ -340,7 +341,7 @@ namespace SysBot.Pokemon
                         var vals = Enum.GetValues(typeof(TCItems));
                         do
                         {
-                            item = (TCItems)vals.GetValue(new Random().Next(vals.Length));
+                            item = (TCItems)vals.GetValue(new Random().Next(vals.Length))!;
                         } while (Game is GameVersion.BDSP ? (int)item <= 0 || (int)item >= 537 : (int)item <= 0 || (int)item == 226 || (int)item == 227);
                     }
                     else
@@ -413,8 +414,8 @@ namespace SysBot.Pokemon
                     return false;
                 }
 
-                var found = user.Catches.TryGetValue(id, out TCCatch match);
-                if (!found || match.Traded)
+                var found = user.Catches.TryGetValue(id, out TCCatch? match);
+                if (!found || match == null || match.Traded)
                 {
                     result.Message = "There is no Pokémon with this ID.";
                     return false;
@@ -464,7 +465,7 @@ namespace SysBot.Pokemon
 
             bool FuncList()
             {
-                List<string> filters = input.Contains("=") ? input.Split('=').ToList() : new();
+                List<string> filters = input.Contains('=') ? input.Split('=').ToList() : new();
                 if (filters.Count > 0)
                 {
                     filters.RemoveAt(0);
@@ -479,7 +480,7 @@ namespace SysBot.Pokemon
 
                 string nickname = input;
                 input = ListNameSanitize(input);
-                bool speciesAndForm = input.Contains("-");
+                bool speciesAndForm = input.Contains('-');
                 bool isSpecies = SpeciesName.GetSpeciesID(speciesAndForm ? input.Split('-')[0] : input) > 0;
                 bool isBall = Enum.TryParse(input, true, out Ball enumBall);
                 bool isShiny = filters.FirstOrDefault(x => x == "Shiny") != default;
@@ -560,8 +561,8 @@ namespace SysBot.Pokemon
                     return false;
                 }
 
-                var found = user.Catches.TryGetValue(id, out TCCatch match);
-                if (!found || match.Traded)
+                var found = user.Catches.TryGetValue(id, out TCCatch? match);
+                if (!found || match == null || match.Traded)
                 {
                     result.Message = "Could not find this ID.";
                     return false;
@@ -600,7 +601,7 @@ namespace SysBot.Pokemon
                     return false;
                 }
 
-                bool speciesAndForm = input.Contains("-");
+                bool speciesAndForm = input.Contains('-');
                 string tableJoin = "catches c inner join daycare d on c.user_id = d.user_id inner join buddy b on c.user_id = b.user_id";
                 string ballSearch = $"and c.is_favorite = 0 and c.was_traded = 0 and c.is_shiny = 0 and c.species != 'Ditto' and c.id != d.id1 and c.id != d.id2 and c.id != b.id and c.ball = '{ball}' and c.is_legendary = 0";
                 string shinySearch = "and c.is_favorite = 0 and c.was_traded = 0 and c.is_shiny = 1 and c.species != 'Ditto' and c.id != d.id1 and c.id != d.id2 and c.id != b.id and c.is_event = 0 and c.is_legendary = 0";
@@ -667,7 +668,7 @@ namespace SysBot.Pokemon
             return result;
         }
 
-        private Results ReleaseHandler(TCUser user, string input)
+        private static Results ReleaseHandler(TCUser user, string input)
         {
             Results result = new();
             bool FuncRelease()
@@ -678,8 +679,8 @@ namespace SysBot.Pokemon
                     return false;
                 }
 
-                var found = user.Catches.TryGetValue(id, out TCCatch match);
-                if (!found || match.Traded)
+                var found = user.Catches.TryGetValue(id, out TCCatch? match);
+                if (!found || match == null || match.Traded)
                 {
                     result.Message = "Cannot find this Pokémon.";
                     return false;
@@ -735,7 +736,7 @@ namespace SysBot.Pokemon
             return result;
         }
 
-        private Results DaycareHandler(TCUser user, string action, string id)
+        private static Results DaycareHandler(TCUser user, string action, string id)
         {
             Results result = new()
             {
@@ -755,8 +756,8 @@ namespace SysBot.Pokemon
                 string speciesString = string.Empty;
                 bool deposit = action == "d" || action == "deposit";
                 bool withdraw = action == "w" || action == "withdraw";
-                bool found = user.Catches.TryGetValue(_id, out TCCatch match);
-                if (deposit && (!found || match.Traded))
+                bool found = user.Catches.TryGetValue(_id, out TCCatch? match);
+                if (deposit && (!found || match is null || match.Traded))
                 {
                     result.Message = "There is no Pokémon with this ID.";
                     return false;
@@ -805,7 +806,7 @@ namespace SysBot.Pokemon
                         result.SQLCommands.Add(DBCommandConstructor("daycare", "id1 = ?, species1 = ?, form1 = ?, ball1 = ?, shiny1 = ?, id2 = ?, species2 = ?, form2 = ?, ball2 = ?, shiny2 = ?", "where user_id = ?", names, obj, SQLTableContext.Update));
                     }
                 }
-                else if (deposit)
+                else if (deposit && match is not null)
                 {
                     if (user.Daycare.ID1 is not 0 && user.Daycare.ID2 is not 0)
                     {
@@ -815,8 +816,8 @@ namespace SysBot.Pokemon
 
                     var speciesStr = string.Join("", match.Species.Split('-', ' ', '’', '.'));
                     speciesStr += match.Species + match.Form == "Nidoran-M" ? "M" : match.Species + match.Form == "Nidoran-F" ? "F" : "";
-                    Enum.TryParse(match.Ball, out Ball ball);
-                    Enum.TryParse(speciesStr, out Species species);
+                    _ = Enum.TryParse(match.Ball, out Ball ball);
+                    _ = Enum.TryParse(speciesStr, out Species species);
 
                     if ((user.Daycare.ID1 is 0 && user.Daycare.ID2 is 0) || (user.Daycare.ID1 is 0 && user.Daycare.ID2 != _id))
                         user.Daycare = new() { Ball1 = (int)ball, Form1 = match.Form, ID1 = match.ID, Shiny1 = match.Shiny, Species1 = (ushort)species, Ball2 = user.Daycare.Ball2, Form2 = user.Daycare.Form2, ID2 = user.Daycare.ID2, Shiny2 = user.Daycare.Shiny2, Species2 = user.Daycare.Species2 };
@@ -837,7 +838,7 @@ namespace SysBot.Pokemon
                 }
 
                 result.EmbedName += $"{(deposit ? " Deposit" : " Withdraw")}";
-                result.Message = deposit && found ? $"Deposited your {(match.Shiny ? "★" : "")}{match.Species}{match.Form}({match.Ball}) to daycare!" : $"You withdrew your {speciesString} from the daycare.";
+                result.Message = deposit && found ? $"Deposited your {(match!.Shiny ? "★" : "")}{match.Species}{match.Form}({match.Ball}) to daycare!" : $"You withdrew your {speciesString} from the daycare.";
                 return true;
             }
 
@@ -857,8 +858,8 @@ namespace SysBot.Pokemon
                     return false;
                 }
 
-                var found = user.Catches.TryGetValue(id, out TCCatch match);
-                if (!found || match.Traded)
+                var found = user.Catches.TryGetValue(id, out TCCatch? match);
+                if (!found || match == null || match.Traded)
                 {
                     result.Message = "Cannot find this Pokémon.";
                     return false;
@@ -916,38 +917,41 @@ namespace SysBot.Pokemon
             return result;
         }
 
-        private Results TrainerInfoSetHandler(TCUser user, string[] input)
+        private static Results TrainerInfoSetHandler(TCUser user, string[] input)
         {
             Results result = new();
             user.TrainerInfo.OTName = input[0];
             user.TrainerInfo.OTGender = input[1];
-            user.TrainerInfo.TID = int.Parse(input[2]);
-            user.TrainerInfo.SID = int.Parse(input[3]);
+            user.TrainerInfo.TID16 = ushort.Parse(input[2]);
+            user.TrainerInfo.SID16 = ushort.Parse(input[3]);
             user.TrainerInfo.Language = input[4];
             var names = new string[] { "@ot", "@ot_gender", "@tid", "@sid", "@language", "@user_id" };
-            var obj = new object[] { user.TrainerInfo.OTName, user.TrainerInfo.OTGender, user.TrainerInfo.TID, user.TrainerInfo.SID, user.TrainerInfo.Language, user.UserInfo.UserID };
+            var obj = new object[] { user.TrainerInfo.OTName, user.TrainerInfo.OTGender, user.TrainerInfo.TID16, user.TrainerInfo.SID16, user.TrainerInfo.Language, user.UserInfo.UserID };
             result.SQLCommands.Add(DBCommandConstructor("trainerinfo", "ot = ?, ot_gender = ?, tid = ?, sid = ?, language = ?", "where user_id = ?", names, obj, SQLTableContext.Update));
 
+            var tr = new SimpleTrainerInfo(Game) { TID16 = user.TrainerInfo.TID16, SID16 = user.TrainerInfo.SID16 };
             result.Message = $"\nYour trainer info was set to the following:" +
                              $"\n**OT:** {user.TrainerInfo.OTName}" +
                              $"\n**OTGender:** {user.TrainerInfo.OTGender}" +
-                             $"\n**TID:** {user.TrainerInfo.TID}" +
-                             $"\n**SID:** {user.TrainerInfo.SID}" +
+                             $"\n**Display TID:** {tr.GetTrainerTID7()}" +
+                             $"\n**Display SID:** {tr.GetTrainerSID7()}" +
                              $"\n**Language:** {user.TrainerInfo.Language}";
             result.Success = true;
             result.User = user;
             return result;
         }
 
-        private Results TrainerInfoHandler(TCUser user)
+        private static Results TrainerInfoHandler(TCUser user)
         {
             Results result = new();
             var sc = user.Items.FirstOrDefault(x => x.Item == TCItems.ShinyCharm);
             var count = sc == default ? 0 : sc.ItemCount;
+
+            var tr = new SimpleTrainerInfo(Game) { TID16 = user.TrainerInfo.TID16, SID16 = user.TrainerInfo.SID16 };
             result.Message = $"\n**OT:** {user.TrainerInfo.OTName}" +
                              $"\n**OTGender:** {user.TrainerInfo.OTGender}" +
-                             $"\n**TID:** {user.TrainerInfo.TID}" +
-                             $"\n**SID:** {user.TrainerInfo.SID}" +
+                             $"\n**Display TID:** {tr.GetTrainerTID7()}" +
+                             $"\n**Display SID:** {tr.GetTrainerSID7()}" +
                              $"\n**Language:** {user.TrainerInfo.Language}" +
                              $"\n**Shiny Charm:** {count}" +
                              $"\n**UTC Time Offset:** {user.UserInfo.TimeZoneOffset}" +
@@ -956,7 +960,7 @@ namespace SysBot.Pokemon
             return result;
         }
 
-        private Results FavoritesInfoHandler(Dictionary<int, TCCatch> catches)
+        private static Results FavoritesInfoHandler(Dictionary<int, TCCatch> catches)
         {
             Results result = new();
             bool FuncFavoritesInfo()
@@ -983,7 +987,7 @@ namespace SysBot.Pokemon
             return result;
         }
 
-        private Results FavoritesHandler(TCUser user, string input)
+        private static Results FavoritesHandler(TCUser user, string input)
         {
             Results result = new()
             {
@@ -1014,8 +1018,8 @@ namespace SysBot.Pokemon
                     return true;
                 }
 
-                var found = user.Catches.TryGetValue(id, out TCCatch match);
-                if (!found || match.Traded)
+                var found = user.Catches.TryGetValue(id, out TCCatch? match);
+                if (!found || match == null || match.Traded)
                 {
                     result.Message = "Cannot find this Pokémon.";
                     return false;
@@ -1237,8 +1241,8 @@ namespace SysBot.Pokemon
                     return false;
                 }
 
-                var found = user.Catches.TryGetValue(input != string.Empty ? id : user.Buddy.ID, out TCCatch match);
-                if (!found)
+                var found = user.Catches.TryGetValue(input != string.Empty ? id : user.Buddy.ID, out TCCatch? match);
+                if (!found || match == null)
                 {
                     if (input == string.Empty)
                     {
@@ -1312,8 +1316,8 @@ namespace SysBot.Pokemon
                     return false;
                 }
 
-                var found = user.Catches.TryGetValue(user.Buddy.ID, out TCCatch match);
-                if (!found || match.Traded)
+                var found = user.Catches.TryGetValue(user.Buddy.ID, out TCCatch? match);
+                if (!found || match == null || match.Traded)
                 {
                     result.Message = "Could not find this Pokémon.";
                     return false;
@@ -1396,8 +1400,8 @@ namespace SysBot.Pokemon
                     return false;
                 }
 
-                var found = user.Catches.TryGetValue(user.Buddy.ID, out TCCatch match);
-                if (!found || match.Traded)
+                var found = user.Catches.TryGetValue(user.Buddy.ID, out TCCatch? match);
+                if (!found || match == null || match.Traded)
                 {
                     result.Message = "Could not find this Pokémon.";
                     return false;
@@ -1504,8 +1508,8 @@ namespace SysBot.Pokemon
                     return false;
                 }
 
-                var found = user.Catches.TryGetValue(user.Buddy.ID, out TCCatch match);
-                if (!found || match.Traded)
+                var found = user.Catches.TryGetValue(user.Buddy.ID, out TCCatch? match);
+                if (!found || match == null || match.Traded)
                 {
                     result.Message = "Could not find this Pokémon.";
                     return false;
@@ -1671,8 +1675,8 @@ namespace SysBot.Pokemon
                     return false;
                 }
 
-                var found = user.Catches.TryGetValue(user.Buddy.ID, out TCCatch match);
-                if (!found || match.Traded)
+                var found = user.Catches.TryGetValue(user.Buddy.ID, out TCCatch? match);
+                if (!found || match == null || match.Traded)
                 {
                     result.Message = "Could not find this Pokémon.";
                     return false;
@@ -1845,7 +1849,7 @@ namespace SysBot.Pokemon
             return result;
         }
 
-        private Results TimeZoneHandler(TCUser user, string input)
+        private static Results TimeZoneHandler(TCUser user, string input)
         {
             Results result = new();
             bool FuncTimeZone()
@@ -1875,7 +1879,7 @@ namespace SysBot.Pokemon
             return result;
         }
 
-        private Results EventPingHandler(TCUser user)
+        private static Results EventPingHandler(TCUser user)
         {
             Results result = new();
             bool enabled = user.UserInfo.ReceiveEventPing;
@@ -1949,6 +1953,7 @@ namespace SysBot.Pokemon
             var finalEggName = eggSpeciesName + eggForm;
 
             pk.ResetPartyStats();
+            pk.ClearHyperTraining();
             msg = $"&^&You got {(pk.IsShiny ? "a **shiny egg**" : "an egg")} from the daycare! Welcome, {(pk.IsShiny ? $"**{finalEggName}**" : $"{finalEggName}")}!";
             return pk;
         }
@@ -2088,8 +2093,8 @@ namespace SysBot.Pokemon
             buddyMsg = string.Empty;
             if (user.Buddy.ID is not 0)
             {
-                var found = user.Catches.TryGetValue(user.Buddy.ID, out TCCatch match);
-                if (!found || match.Traded)
+                var found = user.Catches.TryGetValue(user.Buddy.ID, out TCCatch? match);
+                if (!found || match == null || match.Traded)
                     return;
 
                 var pk = GetLookupAsClassObject<T>(user.UserInfo.UserID, "binary_catches", $"and id = {match.ID}");
@@ -2261,9 +2266,9 @@ namespace SysBot.Pokemon
 
         public string GetDexFlavorText(ushort species, byte form, bool gmax) => GetDexFlavorFromTable(species, form, gmax);
 
-        private bool ValidateOT(TCTrainerInfo info) => info.OTName.Length <= Legal.GetMaxLengthOT(8, (LanguageID)Enum.Parse(typeof(LanguageID), info.Language));
+        private static bool ValidateOT(TCTrainerInfo info) => info.OTName.Length <= Legal.GetMaxLengthOT(8, (LanguageID)Enum.Parse(typeof(LanguageID), info.Language));
 
-        private SQLCommand DBCommandConstructor(string table, string vals, string filter, string[] names, object[] values, SQLTableContext ctx)
+        private static SQLCommand DBCommandConstructor(string table, string vals, string filter, string[] names, object[] values, SQLTableContext ctx)
         {
             string cmd = ctx switch
             {

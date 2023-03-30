@@ -51,9 +51,7 @@ namespace SysBot.Pokemon
                     if (!await InnerLoop(token).ConfigureAwait(false))
                         break;
                 }
-#pragma warning disable CA1031 // Do not catch general exception types
                 catch (Exception e)
-#pragma warning restore CA1031 // Do not catch general exception types
                 {
                     Log(e.Message);
                 }
@@ -104,7 +102,7 @@ namespace SysBot.Pokemon
             var print = Hub.Config.StopConditions.GetPrintName(pk);
             Log($"Encounter: {encounterCount}{Environment.NewLine}{print}{Environment.NewLine}");
             Settings.AddCompletedEggs();
-            TradeExtensions<PK8>.EncounterLogs(pk, "EncounterLogPretty_Egg.txt");
+            TradeExtensions<PK8>.EncounterLogs(pk, "EncounterLogPretty_EggSWSH.txt");
 
             if (DumpSetting.Dump && !string.IsNullOrEmpty(DumpSetting.DumpFolder))
                 DumpPokemon(DumpSetting.DumpFolder, "egg", pk);

@@ -88,7 +88,7 @@ namespace SysBot.Pokemon
             };
         }
 
-        private bool Initialize()
+        private static bool Initialize()
         {
             if (Connected)
                 return true;
@@ -120,7 +120,7 @@ namespace SysBot.Pokemon
             {
                 user.UserInfo.UserID = id;
                 user.UserInfo.Username = name;
-                InitializeNewUser(id, name);
+                TradeCordBase<T>.InitializeNewUser(id, name);
             }
 
             user.TrainerInfo = GetLookupAsClassObject<TCTrainerInfo>(id, "trainerinfo");
@@ -154,7 +154,7 @@ namespace SysBot.Pokemon
             cmd.CommandText = "select * from users where receive_ping = 1";
             using SQLiteDataReader reader = cmd.ExecuteReader();
             while (reader.Read())
-                userIDs.Add(ulong.Parse(reader["user_id"].ToString()));
+                userIDs.Add(ulong.Parse(reader["user_id"].ToString()!));
             return userIDs.ToArray();
         }
 
@@ -170,13 +170,13 @@ namespace SysBot.Pokemon
             using SQLiteDataReader reader = cmd.ExecuteReader();
             object returnObj = table switch
             {
-                "dex" => DexReader(reader),
-                "perks" => PerkReader(reader),
-                "buddy" => BuddyReader(reader),
-                "daycare" => DaycareReader(reader),
-                "trainerinfo" => TrainerInfoReader(reader),
-                "users" => UserInfoReader(reader),
-                "items" => ItemReader(reader),
+                "dex" => TradeCordBase<T>.DexReader(reader),
+                "perks" => TradeCordBase<T>.PerkReader(reader),
+                "buddy" => TradeCordBase<T>.BuddyReader(reader),
+                "daycare" => TradeCordBase<T>.DaycareReader(reader),
+                "trainerinfo" => TradeCordBase<T>.TrainerInfoReader(reader),
+                "users" => TradeCordBase<T>.UserInfoReader(reader),
+                "items" => TradeCordBase<T>.ItemReader(reader),
                 "catches" => CatchReader(reader, id),
                 "binary_catches" => CatchPKMReader(reader),
                 _ => throw new NotImplementedException(),
@@ -190,7 +190,7 @@ namespace SysBot.Pokemon
             {
                 var cmd = Connection.CreateCommand();
                 cmd.CommandText = cmds[0].CommandText;
-                var parameters = ParameterConstructor(cmds[0].Names, cmds[0].Values);
+                var parameters = TradeCordBase<T>.ParameterConstructor(cmds[0].Names!, cmds[0].Values!);
                 cmd.Parameters.AddRange(parameters);
                 cmd.ExecuteNonQuery();
                 return;
@@ -202,18 +202,15 @@ namespace SysBot.Pokemon
                 var cmd = Connection.CreateCommand();
                 cmd.Transaction = tran;
                 cmd.CommandText = cmds[i].CommandText;
-                var parameters = ParameterConstructor(cmds[i].Names, cmds[i].Values);
+                var parameters = TradeCordBase<T>.ParameterConstructor(cmds[i].Names!, cmds[i].Values!);
                 cmd.Parameters.AddRange(parameters);
                 cmd.ExecuteNonQuery();
             }
             tran.Commit();
         }
 
-        private SQLiteParameter[] ParameterConstructor(string[]? parameters, object[]? values)
+        private static SQLiteParameter[] ParameterConstructor(string[] parameters, object[] values)
         {
-            if (parameters == null || values == null)
-                throw new ArgumentNullException();
-
             SQLiteParameter[] sqParams = new SQLiteParameter[parameters.Length];
             for (int i = 0; i < parameters.Length; i++)
                 sqParams[i] = new() { ParameterName = parameters[i], Value = values[i] };
@@ -227,11 +224,11 @@ namespace SysBot.Pokemon
             cmd.CommandText = $"select {selection} from dex_flavor where species = {species}";
             using SQLiteDataReader reader = cmd.ExecuteReader();
             if (reader.Read())
-                return reader[selection].ToString();
+                return reader[selection].ToString()!;
             return "";
         }
 
-        private void InitializeNewUser(ulong id, string name)
+        private static void InitializeNewUser(ulong id, string name)
         {
             using var tran = Connection.BeginTransaction();
             var cmd = Connection.CreateCommand();
@@ -268,7 +265,7 @@ namespace SysBot.Pokemon
             cmd.ExecuteNonQuery();
         }
 
-        private Dictionary<int, TCCatch> CatchReader(SQLiteDataReader reader, ulong id)
+        private static Dictionary<int, TCCatch> CatchReader(SQLiteDataReader reader, ulong id)
         {
             Dictionary<int, TCCatch> catches = new();
             while (reader.Read())
@@ -277,10 +274,10 @@ namespace SysBot.Pokemon
                 {
                     ID = (int)reader["id"],
                     Shiny = (int)reader["is_shiny"] != 0,
-                    Ball = reader["ball"].ToString(),
-                    Nickname = reader["nickname"].ToString(),
-                    Species = reader["species"].ToString(),
-                    Form = reader["form"].ToString(),
+                    Ball = reader["ball"].ToString()!,
+                    Nickname = reader["nickname"].ToString()!,
+                    Species = reader["species"].ToString()!,
+                    Form = reader["form"].ToString()!,
                     Egg = (int)reader["is_egg"] != 0,
                     Favorite = (int)reader["is_favorite"] != 0,
                     Traded = (int)reader["was_traded"] != 0,
@@ -303,7 +300,7 @@ namespace SysBot.Pokemon
             return catches;
         }
 
-        private T CatchPKMReader(SQLiteDataReader reader)
+        private static T CatchPKMReader(SQLiteDataReader reader)
         {
             T? pk = null;
             if (reader.Read())
@@ -311,7 +308,7 @@ namespace SysBot.Pokemon
             return pk ?? new();
         }
 
-        private List<TCItem> ItemReader(SQLiteDataReader reader)
+        private static List<TCItem> ItemReader(SQLiteDataReader reader)
         {
             List<TCItem> items = new();
             while (reader.Read())
@@ -327,12 +324,12 @@ namespace SysBot.Pokemon
             return items;
         }
 
-        private TCPerks PerkReader(SQLiteDataReader reader)
+        private static TCPerks PerkReader(SQLiteDataReader reader)
         {
             TCPerks perks = new();
             if (reader.Read())
             {
-                var perkArr = reader["perks"].ToString().Split(',');
+                var perkArr = reader["perks"].ToString()!.Split(',');
                 var boost = (ushort)(int)reader["species_boost"];
                 if (perkArr[0] != "")
                 {
@@ -344,24 +341,24 @@ namespace SysBot.Pokemon
             return perks;
         }
 
-        private TCBuddy BuddyReader(SQLiteDataReader reader)
+        private static TCBuddy BuddyReader(SQLiteDataReader reader)
         {
             TCBuddy buddy = new();
             if (reader.Read())
             {
                 buddy.ID = (int)reader["id"];
-                buddy.Nickname = reader["name"].ToString();
+                buddy.Nickname = reader["name"].ToString()!;
                 buddy.Ability = (Ability)(int)reader["ability"];
             }
             return buddy;
         }
 
-        private TCDex DexReader(SQLiteDataReader reader)
+        private static TCDex DexReader(SQLiteDataReader reader)
         {
             TCDex dex = new();
             if (reader.Read())
             {
-                var dexEntries = reader["entries"].ToString().Replace(" ", "").Split(',');
+                var dexEntries = reader["entries"].ToString()!.Replace(" ", "").Split(',');
                 var count = (int)reader["dex_count"];
                 if (dexEntries[0] != "")
                 {
@@ -376,50 +373,65 @@ namespace SysBot.Pokemon
             return dex;
         }
 
-        private TCTrainerInfo TrainerInfoReader(SQLiteDataReader reader)
+        private static TCTrainerInfo TrainerInfoReader(SQLiteDataReader reader)
         {
             TCTrainerInfo info = new();
             if (reader.Read())
             {
-                info.OTName = reader["ot"].ToString();
-                info.OTGender = reader["ot_gender"].ToString();
-                info.TID = (int)reader["tid"];
-                info.SID = (int)reader["sid"];
-                info.Language = reader["language"].ToString();
+                info.OTName = reader["ot"].ToString()!;
+                info.OTGender = reader["ot_gender"].ToString()!;
+                try
+                {
+                    info.TID16 = Convert.ToUInt16(reader["tid"]);
+                    info.SID16 = Convert.ToUInt16(reader["sid"]);
+                }
+                catch (Exception)
+                {
+                    uint tid7 = uint.Parse(reader["tid"].ToString()!);
+                    uint sid7 = uint.Parse(reader["sid"].ToString()!);
+
+                    ushort tid16 = (ushort)((sid7 * 1000000 + tid7) % 65536);
+                    ushort sid16 = (ushort)((sid7 * 1000000 + tid7) / 65536);
+
+                    info.TID16 = tid16;
+                    info.SID16 = sid16;
+                }
+
+                info.Language = reader["language"].ToString()!;
             }
             return info;
         }
 
-        private TCDaycare DaycareReader(SQLiteDataReader reader)
+        private static TCDaycare DaycareReader(SQLiteDataReader reader)
         {
             TCDaycare dc = new();
             if (reader.Read())
             {
                 dc.ID1 = (int)reader["id1"];
                 dc.Species1 = (ushort)(int)reader["species1"];
-                dc.Form1 = reader["form1"].ToString();
+                dc.Form1 = reader["form1"].ToString()!;
                 dc.Ball1 = (int)reader["ball1"];
                 dc.Shiny1 = (int)reader["shiny1"] != 0;
 
                 dc.ID2 = (int)reader["id2"];
                 dc.Species2 = (ushort)(int)reader["species2"];
-                dc.Form2 = reader["form2"].ToString();
+                dc.Form2 = reader["form2"].ToString()!;
                 dc.Ball2 = (int)reader["ball2"];
                 dc.Shiny2 = (int)reader["shiny2"] != 0;
             }
             return dc;
         }
 
-        private TCUserInfo UserInfoReader(SQLiteDataReader reader)
+        private static TCUserInfo UserInfoReader(SQLiteDataReader reader)
         {
             TCUserInfo info = new();
             if (reader.Read())
             {
-                info.UserID = ulong.Parse(reader["user_id"].ToString());
-                info.Username = reader["username"].ToString();
+                info.UserID = ulong.Parse(reader["user_id"].ToString()!);
+                info.Username = reader["username"].ToString()!;
                 info.CatchCount = (int)reader["catch_count"];
                 info.TimeZoneOffset = (int)reader["time_offset"];
-                info.LastPlayed = DateTime.Parse(reader["last_played"].ToString());
+                info.LastPlayed = DateTime.Parse(reader["last_played"].ToString()!);
                 info.ReceiveEventPing = (int)reader["receive_ping"] != 0;
             }
             return info;
@@ -469,8 +481,8 @@ namespace SysBot.Pokemon
             using SQLiteDataReader reader = cmd.ExecuteReader();
             while (reader.Read())
             {
-                var date = DateTime.Parse(reader["last_played"].ToString());
-                var id = ulong.Parse(reader["user_id"].ToString());
+                var date = DateTime.Parse(reader["last_played"].ToString()!);
+                var id = ulong.Parse(reader["user_id"].ToString()!);
                 if (DateTime.Now.Subtract(date).TotalDays >= 30)
                     ids.Add(id);
             }
@@ -488,7 +500,7 @@ namespace SysBot.Pokemon
 
         protected bool CreateDB()
         {
-            if (!Initialize())
+            if (!TradeCordBase<T>.Initialize())
                 return false;
 
             bool exists = new FileInfo(DatabasePath).Length > 0;
@@ -575,7 +587,7 @@ namespace SysBot.Pokemon
                 if (!wasFixedEgg)
                 {
                     Base.LogUtil.LogInfo("Checking for nickname bugs...", "[SQLite]");
-                    EggBug();
+                    TradeCordBase<T>.EggBug();
                 }
             }
             else if (Game == GameVersion.BDSP)
@@ -596,7 +608,7 @@ namespace SysBot.Pokemon
                 if (!wasFixedBalls)
                 {
                     Base.LogUtil.LogInfo("Checking for BDSP Poke Ball and contest stat errors...", "[SQLite]");
-                    LegalityFixBDSP();
+                    TradeCordBase<T>.LegalityFixBDSP();
                 }
             }
 
@@ -630,7 +642,7 @@ namespace SysBot.Pokemon
                 var reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    ulong id = ulong.Parse(reader["user_id"].ToString());
+                    ulong id = ulong.Parse(reader["user_id"].ToString()!);
                     int catchID = (int)reader["id"];
                     var pk = (T?)EntityFormat.GetFromBytes((byte[])reader["data"]);
                     if (pk == null)
@@ -668,7 +680,7 @@ namespace SysBot.Pokemon
             if (!wasFixedGmax)
             {
                 Base.LogUtil.LogInfo("Checking for incorrect Gmax flags...", "[SQLite]");
-                GmaxFix();
+                TradeCordBase<T>.GmaxFix();
             }
 
             tran.Commit();
@@ -683,7 +695,7 @@ namespace SysBot.Pokemon
                 return "";
 
             var resourcePath = "SysBot.Pokemon.TradeCord.Resources.DexFlavor.txt";
-            using StreamReader reader = new(Assembly.GetExecutingAssembly().GetManifestResourceStream(resourcePath));
+            using StreamReader reader = new(Assembly.GetExecutingAssembly().GetManifestResourceStream(resourcePath)!);
             if (form > 0 && IsLegendaryOrMythical(species))
                 form = 0;
 
@@ -699,7 +711,7 @@ namespace SysBot.Pokemon
             return str[^1].Replace("'", "''");
         }
 
-        private Dictionary<ushort, IReadOnlyCollection<byte>> GetPokedex()
+        private static Dictionary<ushort, IReadOnlyCollection<byte>> GetPokedex()
         {
             Dictionary<ushort, IReadOnlyCollection<byte>> dex = new();
             var livingDex = Game is GameVersion.SWSH ? new SAV8SWSH().GetLivingDex().OrderBySpecies() : new SAV8BS().GetLivingDex().OrderBySpecies();
@@ -713,8 +725,11 @@ namespace SysBot.Pokemon
                 for (int g = 0; g < group.Length; g++)
                 {
                     var pk = group[g];
-                    if (!FormInfo.IsFusedForm(pk.Species, pk.Form, pk.Format) && !FormInfo.IsBattleOnlyForm(pk.Species, pk.Form, pk.Format))
-                        forms.Add(pk.Form);
+                    if (FormInfo.IsFusedForm(pk.Species, pk.Form, pk.Format) || FormInfo.IsBattleOnlyForm(pk.Species, pk.Form, pk.Format)
+                        || FormInfo.IsLordForm(pk.Species, pk.Form, pk.Context) || FormInfo.IsUntradable(pk.Species, pk.Form, pk is IFormArgument arg ? arg.FormArgument : 0, pk.Format))
+                        continue;
+
+                    forms.Add(pk.Form);
                 }
 
                 dex.Add(group[0].Species, forms);
@@ -727,7 +742,7 @@ namespace SysBot.Pokemon
             baseSpecies = 0;
             baseForm = 0;
             var name = SpeciesName.GetSpeciesNameGeneration(species, 2, 8);
-            var formStr = TradeExtensions<PK8>.FormOutput(species, form, out _);
+            var formStr = TradeExtensions<T>.FormOutput(species, form, out _);
             if (name.Contains("Nidoran"))
                 name = name.Remove(name.Length - 1);
 
@@ -739,19 +754,19 @@ namespace SysBot.Pokemon
                 return false;
 
             var table = EvolutionTree.GetEvolutionTree(pkm.Context);
-            var evos = table.GetValidPreEvolutions(pkm, 100, 8, true);
-            var encs = EncounterEggGenerator.GenerateEggs(pkm, evos, 8, true).ToArray();
-            if (encs.Length is 0 || !Breeding.CanHatchAsEgg(species) || !Breeding.CanHatchAsEgg(species, form, EntityContext.Gen8))
+            var evos = table.GetValidPreEvolutions(pkm, 100);
+            var encs = EncounterGenerator.GetGenerator(Game).GetPossible(pkm, evos, Game, EncounterTypeGroup.Egg).ToArray();
+            if (encs.Length is 0 || !Breeding.CanHatchAsEgg(species) || !Breeding.CanHatchAsEgg(species, form, pkm.Context))
                 return false;
 
             baseSpecies = encs[^1].Species;
-            if (GameData.GetPersonal(Game).GetFormEntry(baseSpecies, form).IsFormWithinRange(form) && Breeding.CanHatchAsEgg(baseSpecies, form, EntityContext.Gen8))
+            if (GameData.GetPersonal(Game).GetFormEntry(baseSpecies, form).IsFormWithinRange(form) && Breeding.CanHatchAsEgg(baseSpecies, form, pkm.Context))
                 baseForm = (byte)(species is (ushort)Darmanitan && form <= 1 ? 0 : form);
             else baseForm = encs[^1].Form;
             return true;
         }
 
-        private void LegalityFixPK8()
+        private static void LegalityFixPK8()
         {
             Base.EchoUtil.Echo("Beginning to scan for and fix legality errors. This may take a while.");
             int updated = 0;
@@ -763,14 +778,14 @@ namespace SysBot.Pokemon
             while (reader.Read())
             {
                 bool write = false;
-                ulong user_id = ulong.Parse(reader["user_id"].ToString());
+                ulong user_id = ulong.Parse(reader["user_id"].ToString()!);
                 int catch_id = (int)reader["id"];
                 var pk = (T?)EntityFormat.GetFromBytes((byte[])reader["data"]) ?? new();
 
                 var la = new LegalityAnalysis(pk);
                 if (!la.Valid)
                 {
-                    var sav = new SimpleTrainerInfo() { OT = pk.OT_Name, Gender = pk.OT_Gender, Generation = pk.Generation, Language = pk.Language, SID = pk.TrainerSID7, TID = pk.TrainerID7 };
+                    var sav = new SimpleTrainerInfo() { OT = pk.OT_Name, Gender = pk.OT_Gender, Generation = pk.Generation, Language = pk.Language, SID16 = pk.SID16, TID16 = pk.TID16 };
                     var results = la.Results.FirstOrDefault(x => !x.Valid && x.Identifier != CheckIdentifier.Memory);
                     var enc = new LegalityAnalysis(pk).EncounterMatch;
                     pk.SetHandlerandMemory(sav, enc);
@@ -781,7 +796,7 @@ namespace SysBot.Pokemon
                             case CheckIdentifier.Evolution:
                                 {
                                     if (pk.Species is (ushort)Lickilicky && pk.Met_Location is not 162 && pk.Met_Location is not 244 && !pk.RelearnMoves.ToList().Contains(205))
-                                        SetMoveOrRelearnByIndex(pk, 205, true);
+                                        TradeCordBase<T>.SetMoveOrRelearnByIndex(pk, 205, true);
                                 }; break;
                             case CheckIdentifier.Encounter:
                                 {
@@ -799,7 +814,7 @@ namespace SysBot.Pokemon
                             case CheckIdentifier.Form:
                                 {
                                     if (pk.Species is (ushort)Keldeo && pk.Form is 1 && !pk.Moves.ToList().Contains(548))
-                                        SetMoveOrRelearnByIndex(pk, 548, false);
+                                        TradeCordBase<T>.SetMoveOrRelearnByIndex(pk, 548, false);
                                 }; break;
                             case CheckIdentifier.Nickname:
                                 {
@@ -858,7 +873,7 @@ namespace SysBot.Pokemon
                 {
                     cmd.Transaction = tran;
                     cmd.CommandText = cmds[i].CommandText;
-                    var parameters = ParameterConstructor(cmds[i].Names, cmds[i].Values);
+                    var parameters = TradeCordBase<T>.ParameterConstructor(cmds[i].Names!, cmds[i].Values!);
                     cmd.Parameters.AddRange(parameters);
                     cmd.ExecuteNonQuery();
                 }
@@ -870,7 +885,7 @@ namespace SysBot.Pokemon
             Base.EchoUtil.Echo($"Scan complete! Updated {updated} records.");
         }
 
-        private void EggBug()
+        private static void EggBug()
         {
             Base.EchoUtil.Echo("Beginning to scan for species nicknamed \"Egg\". This may take a while.");
             List<SQLCommand> cmds = new();
@@ -881,9 +896,9 @@ namespace SysBot.Pokemon
             var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
-                ulong user_id = ulong.Parse(reader["user_id"].ToString());
+                ulong user_id = ulong.Parse(reader["user_id"].ToString()!);
                 int catch_id = (int)reader["id"];
-                string nickname = reader["nickname"].ToString();
+                string nickname = reader["nickname"].ToString()!;
                 var pk = (T?)EntityFormat.GetFromBytes((byte[])reader["data"]) ?? new();
                 var nick = pk.Language switch
                 {
@@ -930,7 +945,7 @@ namespace SysBot.Pokemon
                     cmd = Connection.CreateCommand();
                     cmd.Transaction = tran;
                     cmd.CommandText = cmds[i].CommandText;
-                    var parameters = ParameterConstructor(cmds[i].Names, cmds[i].Values);
+                    var parameters = TradeCordBase<T>.ParameterConstructor(cmds[i].Names!, cmds[i].Values!);
                     cmd.Parameters.AddRange(parameters);
                     cmd.ExecuteNonQuery();
                 }
@@ -942,7 +957,7 @@ namespace SysBot.Pokemon
             Base.EchoUtil.Echo($"Scan complete! Updated {updated} records.");
         }
 
-        private void LegalityFixBDSP()
+        private static void LegalityFixBDSP()
         {
             Base.EchoUtil.Echo("Beginning to scan for and fix legality errors. This may take a while.");
             int updated = 0;
@@ -954,7 +969,7 @@ namespace SysBot.Pokemon
             while (reader.Read())
             {
                 bool write = false;
-                ulong user_id = ulong.Parse(reader["user_id"].ToString());
+                ulong user_id = ulong.Parse(reader["user_id"].ToString()!);
                 int catch_id = (int)reader["id"];
                 var pk = (T?)EntityFormat.GetFromBytes((byte[])reader["data"]) ?? new();
 
@@ -987,8 +1002,8 @@ namespace SysBot.Pokemon
                                             $"Ball: {(Ball)pk.Ball}",
                                             $"OT: {pk.OT_Name}",
                                             $"OTGender: {(Gender)pk.OT_Gender}",
-                                            $"TID: {pk.TrainerID7}",
-                                            $"SID: {pk.TrainerSID7}",
+                                            $"TID: {pk.TID16}",
+                                            $"SID: {pk.SID16}",
                                             $"Language: {(LanguageID)pk.Language}",
                                         });
 
@@ -1045,7 +1060,7 @@ namespace SysBot.Pokemon
                     cmd = Connection.CreateCommand();
                     cmd.Transaction = tran;
                     cmd.CommandText = cmds[i].CommandText;
-                    var parameters = ParameterConstructor(cmds[i].Names, cmds[i].Values);
+                    var parameters = TradeCordBase<T>.ParameterConstructor(cmds[i].Names!, cmds[i].Values!);
                     cmd.Parameters.AddRange(parameters);
                     cmd.ExecuteNonQuery();
                 }
@@ -1057,7 +1072,7 @@ namespace SysBot.Pokemon
             Base.EchoUtil.Echo($"Scan complete! Updated {updated} records.");
         }
 
-        private void GmaxFix()
+        private static void GmaxFix()
         {
             Base.EchoUtil.Echo("Beginning to scan for improper Gmax flags. This may take a while.");
             int updated = 0;
@@ -1081,7 +1096,7 @@ namespace SysBot.Pokemon
 
                 if (result != "Regenerated")
                 {
-                    var user = ulong.Parse(reader["user_id"].ToString());
+                    var user = ulong.Parse(reader["user_id"].ToString()!);
                     var id = (int)reader["id"];
                     var names = new string[] { "@is_gmax", "@user_id", "@id" };
                     var obj = new object[] { false, user, id };
@@ -1099,7 +1114,7 @@ namespace SysBot.Pokemon
                     cmd = Connection.CreateCommand();
                     cmd.Transaction = tran;
                     cmd.CommandText = cmds[i].CommandText;
-                    var parameters = ParameterConstructor(cmds[i].Names, cmds[i].Values);
+                    var parameters = TradeCordBase<T>.ParameterConstructor(cmds[i].Names!, cmds[i].Values!);
                     cmd.Parameters.AddRange(parameters);
                     cmd.ExecuteNonQuery();
                 }
@@ -1111,7 +1126,7 @@ namespace SysBot.Pokemon
             Base.EchoUtil.Echo($"Scan complete! Updated {updated} records.");
         }
 
-        private void SetMoveOrRelearnByIndex(T pk, ushort move, bool relearn)
+        private static void SetMoveOrRelearnByIndex(T pk, ushort move, bool relearn)
         {
             int index = relearn ? pk.RelearnMoves.ToList().IndexOf(0) : pk.Moves.ToList().IndexOf(0);
             if (index is -1 && !relearn)
@@ -1322,11 +1337,10 @@ namespace SysBot.Pokemon
 
         public class TCTrainerInfo
         {
-            public string[] ToStringArray() => new string[] { $"OT: {OTName}\n", $"OTGender: {OTGender}\n", $"TID: {TID}\n", $"SID: {SID}\n", $"Language: {Language}\n" };
             public string OTName { get; set; } = "Carp";
             public string OTGender { get; set; } = "Male";
-            public int TID { get; set; } = 12345;
-            public int SID { get; set; } = 54321;
+            public ushort TID16 { get; set; } = 12345;
+            public ushort SID16 { get; set; } = 54321;
             public string Language { get; set; } = "English";
         }
 

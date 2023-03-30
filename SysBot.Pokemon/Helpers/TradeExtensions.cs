@@ -1,4 +1,8 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using PKHeX.Core;
 using PKHeX.Core.AutoMod;
@@ -25,10 +29,10 @@ namespace SysBot.Pokemon
 
         public static readonly int[] Amped = { 3, 4, 2, 8, 9, 19, 22, 11, 13, 14, 0, 6, 24 };
         public static readonly int[] LowKey = { 1, 5, 7, 10, 12, 15, 16, 17, 18, 20, 21, 23 };
-        public static readonly int[] ShinyLock = {  (int)Species.Victini, (int)Species.Keldeo, (int)Species.Volcanion, (int)Species.Cosmog, (int)Species.Cosmoem, (int)Species.Magearna, (int)Species.Marshadow, (int)Species.Eternatus,
-                                                    (int)Species.Kubfu, (int)Species.Urshifu, (int)Species.Zarude, (int)Species.Glastrier, (int)Species.Spectrier, (int)Species.Calyrex };
+        public static readonly ushort[] ShinyLock = {  (ushort)Species.Victini, (ushort)Species.Keldeo, (ushort)Species.Volcanion, (ushort)Species.Cosmog, (ushort)Species.Cosmoem, (ushort)Species.Magearna, (ushort)Species.Marshadow, (ushort)Species.Eternatus,
+                                                    (ushort)Species.Kubfu, (ushort)Species.Urshifu, (ushort)Species.Zarude, (ushort)Species.Glastrier, (ushort)Species.Spectrier, (ushort)Species.Calyrex };
 
-        public static bool ShinyLockCheck(int species, string form, string ball = "")
+        public static bool ShinyLockCheck(ushort species, string form, string ball = "")
         {
             if (ShinyLock.Contains(species))
                 return true;
@@ -138,7 +142,7 @@ namespace SysBot.Pokemon
                 PK9 => 30023,
                 _ => 60002, //PK8
             };
-            pk.MetDate = DateTime.Parse("2020/10/20");
+            pk.MetDate = DateOnly.Parse("2020/10/20");
             pk.EggMetDate = pk.MetDate;
             pk.HeldItem = 0;
             pk.CurrentLevel = 1;
@@ -223,7 +227,7 @@ namespace SysBot.Pokemon
 
             lock (_syncLog)
             {
-                bool mark = pk is PK8 pk8 && pk8.HasMark();
+                bool mark = pk is PK8 pk8 && pk8.HasEncounterMark();
                 var content = File.ReadAllText(filepath).Split('\n').ToList();
                 var splitTotal = content[0].Split(',');
                 content.RemoveRange(0, 3);
@@ -269,7 +273,72 @@ namespace SysBot.Pokemon
             }
         }
 
+        public static void EncounterScaleLogs(PK9 pk, string filepath = "")
+        {
+            if (filepath == "")
+                filepath = "EncounterScaleLogPretty.txt";
+
+            if (!File.Exists(filepath))
+            {
+                var blank = "Totals: 0 Pokémon, 0 Mini, 0 Jumbo, 0 Miscellaneous\n_________________________________________________\n";
+                File.WriteAllText(filepath, blank);
+            }
+
+            lock (_syncLog)
+            {
+                var content = File.ReadAllText(filepath).Split('\n').ToList();
+                var splitTotal = content[0].Split(',');
+                content.RemoveRange(0, 3);
+
+                bool isMini = pk.Scale == 0;
+                bool isJumbo = pk.Scale == 255;
+                bool isMisc = pk.Scale > 0 && pk.Scale < 255;
+                int pokeTotal = int.Parse(splitTotal[0].Split(' ')[1]) + 1;
+                int miniTotal = int.Parse(splitTotal[1].Split(' ')[1]) + (isMini ? 1 : 0);
+                int jumboTotal = int.Parse(splitTotal[2].Split(' ')[1]) + (isJumbo ? 1 : 0);
+                int otherTotal = int.Parse(splitTotal[3].Split(' ')[1]) + (isMisc ? 1 : 0);
+
+                var form = FormOutput(pk.Species, pk.Form, out _);
+                var speciesName = $"{SpeciesName.GetSpeciesNameGeneration(pk.Species, pk.Language, 9)}{form}".Replace(" ", "");
+                var index = content.FindIndex(x => x.Split(':')[0].Equals(speciesName));
+
+                if (index == -1)
+                    content.Add($"{speciesName}: 1, {(isMini ? 1 : 0)} Mini, {(isJumbo ? 1 : 0)} Jumbo, {(isMisc ? 1 : 0)} Miscellaneous");
+
+                var length = index == -1 ? 1 : 0;
+                for (int i = 0; i < content.Count - length; i++)
+                {
+                    var sanitized = GetSanitizedEncounterScaleArray(content[i]);
+                    if (i == index)
+                    {
+                        int speciesTotal = int.Parse(sanitized[1]) + 1;
+                        int miTotal = int.Parse(sanitized[2]) + (isMini ? 1 : 0);
+                        int juTotal = int.Parse(sanitized[3]) + (isJumbo ? 1 : 0);
+                        int otTotal = int.Parse(sanitized[4]) + (isMisc ? 1 : 0);
+                        content[i] = $"{speciesName}: {speciesTotal}, {miTotal} Mini, {juTotal} Jumbo, {otTotal} Miscellaneous";
+                    }
+                    else content[i] = $"{sanitized[0]} {sanitized[1]}, {sanitized[2]} Mini, {sanitized[3]} Jumbo, {sanitized[4]} Miscellaneous";
+                }
+
+                content.Sort();
+                string totalsString =
+                    $"Totals: {pokeTotal} Pokémon, " +
+                    $"{miniTotal} Mini ({GetPercent(pokeTotal, miniTotal)}%), " +
+                    $"{jumboTotal} Jumbo ({GetPercent(pokeTotal, jumboTotal)}%), " +
+                    $"{otherTotal} Miscellaneous ({GetPercent(pokeTotal, otherTotal)}%)" +
+                    "\n_________________________________________________\n";
+                content.Insert(0, totalsString);
+                File.WriteAllText(filepath, string.Join("\n", content));
+            }
+        }
+
         private static string GetPercent(int total, int subtotal) => (100.0 * ((double)subtotal / total)).ToString("N2", NumberFormatInfo.InvariantInfo);
+
+        private static string[] GetSanitizedEncounterScaleArray(string content)
+        {
+            var replace = new Dictionary<string, string> { { ",", "" }, { " Mini", "" }, { " Jumbo", "" }, { " Miscellaneous", "" }, { "%", "" } };
+            return replace.Aggregate(content, (old, cleaned) => old.Replace(cleaned.Key, cleaned.Value)).Split(' ');
+        }
 
         private static string[] GetSanitizedEncounterLineArray(string content)
         {
@@ -281,7 +350,7 @@ namespace SysBot.Pokemon
         {
             var pkMet = (T)pkm.Clone();
             if (pkMet.Version is not (int)GameVersion.GO)
-                pkMet.MetDate = DateTime.Parse("2020/10/20");
+                pkMet.MetDate = DateOnly.Parse("2020/10/20");
 
             var analysis = new LegalityAnalysis(pkMet);
             var pkTrash = (T)pkMet.Clone();
@@ -311,10 +380,10 @@ namespace SysBot.Pokemon
                 var enc = new LegalityAnalysis(mgPkm).EncounterMatch;
                 mgPkm.SetHandlerandMemory(info, enc);
 
-                if (mgPkm.TID is 0 && mgPkm.SID is 0)
+                if (mgPkm.TID16 is 0 && mgPkm.SID16 is 0)
                 {
-                    mgPkm.TID = info.TID;
-                    mgPkm.SID = info.SID;
+                    mgPkm.TID16 = info.TID16;
+                    mgPkm.SID16 = info.SID16;
                 }
 
                 mgPkm.CurrentLevel = mg.LevelMin;
@@ -354,12 +423,21 @@ namespace SysBot.Pokemon
             if (pkm.Form != 0)
                 pkmform = $"-{pkm.Form}";
 
-            if ((Species)pkm.Species > Species.Enamorus || (Species)pkm.Species == Species.Wooper && pkm.Form != 0 || (Species)pkm.Species == Species.Tauros && pkm.Form != 0)
+            if ((Species)pkm.Species >= Species.Sprigatito || (Species)pkm.Species == Species.Wooper && pkm.Form != 0 || (Species)pkm.Species == Species.Tauros && pkm.Form != 0)
             {
                 if (pkm.IsShiny)
                     newbase = $"https://raw.githubusercontent.com/zyro670/PokeTextures/main/Placeholder_Sprites/scaled_up_sprites/Shiny/" + $"{pkm.Species}{pkmform}" + ".png";
                 else if (!pkm.IsShiny)
                     newbase = $"https://raw.githubusercontent.com/zyro670/PokeTextures/main/Placeholder_Sprites/scaled_up_sprites/" + $"{pkm.Species}{pkmform}" + ".png";
+                return newbase;
+            }
+
+            if ((Species)pkm.Species == Species.Enamorus)
+            {
+                if (!pkm.IsShiny)
+                    newbase = "https://raw.githubusercontent.com/zyro670/HomeImages/master/128x128/poke_capture_0905_000_fd_n_00000000_f_n.png";
+                else
+                    newbase = "https://raw.githubusercontent.com/zyro670/HomeImages/master/128x128/poke_capture_0905_000_fd_n_00000000_f_r.png";
                 return newbase;
             }
 
@@ -390,14 +468,14 @@ namespace SysBot.Pokemon
         public static string FormOutput(ushort species, byte form, out string[] formString)
         {
             var strings = GameInfo.GetStrings("en");
-            formString = FormConverter.GetFormList(species, strings.Types, strings.forms, GameInfo.GenderSymbolASCII, typeof(T) == typeof(PK8) ? EntityContext.Gen8 : EntityContext.Gen4);
+            formString = FormConverter.GetFormList(species, strings.Types, strings.forms, GameInfo.GenderSymbolASCII, typeof(T) == typeof(PK9) ? EntityContext.Gen9 : EntityContext.Gen4);
             if (formString.Length is 0)
                 return string.Empty;
 
             formString[0] = "";
             if (form >= formString.Length)
                 form = (byte)(formString.Length - 1);
-            return formString[form].Contains("-") ? formString[form] : formString[form] == "" ? "" : $"-{formString[form]}";
+            return formString[form].Contains('-') ? formString[form] : formString[form] == "" ? "" : $"-{formString[form]}";
         }
 
         public static bool DifferentFamily(IReadOnlyList<T> pkms)

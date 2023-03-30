@@ -1,7 +1,12 @@
 ﻿using PKHeX.Core;
 using PKHeX.Core.Searching;
 using SysBot.Base;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsetsLA;
 
@@ -97,7 +102,8 @@ namespace SysBot.Pokemon
                 }
                 catch (SocketException e)
                 {
-                    Connection.LogError(e.StackTrace);
+                    if (e.StackTrace != null)
+                        Connection.LogError(e.StackTrace);
                     var attempts = Hub.Config.Timings.ReconnectAttempts;
                     var delay = Hub.Config.Timings.ExtraReconnectDelay;
                     var protocol = Config.Connection.Protocol;
@@ -537,11 +543,21 @@ namespace SysBot.Pokemon
                 }
 
                 var la = new LegalityAnalysis(pk);
-                var verbose = la.Report(true);
+                var verbose = $"```{la.Report(true)}```";
                 Log($"Shown Pokémon is: {(la.Valid ? "Valid" : "Invalid")}.");
 
-                detail.SendNotification(this, pk, verbose);
                 ctr++;
+                var msg = Hub.Config.Trade.DumpTradeLegalityCheck ? verbose : $"File {ctr}";
+
+                // Extra information about trainer data for people requesting with their own trainer data.
+                var ot = pk.OT_Name;
+                var ot_gender = pk.OT_Gender == 0 ? "Male" : "Female";
+                var tid = pk.GetDisplayTID().ToString(pk.GetTrainerIDFormat().GetTrainerIDFormatStringTID());
+                var sid = pk.GetDisplaySID().ToString(pk.GetTrainerIDFormat().GetTrainerIDFormatStringSID());
+                msg += $"\n**Trainer Data**\n```OT: {ot}\nOTGender: {ot_gender}\nTID: {tid}\nSID: {sid}```";
+
+                msg += pk.IsShiny ? "\n**This Pokémon is shiny!**" : string.Empty;
+                detail.SendNotification(this, pk, msg);
             }
             Log($"Ended Dump loop after processing {ctr} Pokémon.");
             if (ctr == 0)
@@ -592,7 +608,7 @@ namespace SysBot.Pokemon
             }
 
             // Inject the shown Pokémon.
-            var clone = (PA8)offered.Clone();
+            var clone = offered.Clone();
             if (Hub.Config.Legality.ResetHOMETracker)
                 clone.Tracker = 0;
 
@@ -773,10 +789,10 @@ namespace SysBot.Pokemon
             var previous = isDistribution
                 ? list.TryRegister(TrainerNID, TrainerName)
                 : list.TryRegister(TrainerNID, TrainerName, poke.Trainer.ID);
-            if (previous != null && previous.NetworkID != TrainerNID && !isDistribution)
+            if (previous != null && previous.NetworkID == TrainerNID && previous.RemoteID != user.ID && !isDistribution)
             {
                 var delta = DateTime.Now - previous.Time;
-                if (delta > TimeSpan.FromMinutes(AbuseSettings.TradeAbuseExpiration) && AbuseSettings.TradeAbuseAction != TradeAbuseAction.Ignore)
+                if (delta < TimeSpan.FromMinutes(AbuseSettings.TradeAbuseExpiration) && AbuseSettings.TradeAbuseAction != TradeAbuseAction.Ignore)
                 {
                     if (AbuseSettings.TradeAbuseAction == TradeAbuseAction.BlockAndQuit)
                     {
@@ -949,7 +965,7 @@ namespace SysBot.Pokemon
             if (clone.FatefulEncounter)
             {
                 clone.SetDefaultNickname(laInit);
-                var info = new SimpleTrainerInfo { Gender = clone.OT_Gender, Language = clone.Language, OT = name, TID = clone.TID, SID = clone.SID, Generation = 8 };
+                var info = new SimpleTrainerInfo { Gender = clone.OT_Gender, Language = clone.Language, OT = name, TID16 = clone.TID16, SID16 = clone.SID16, Generation = 8 };
                 var mg = EncounterEvent.GetAllEvents().Where(x => x.Species == clone.Species && x.Form == clone.Form && x.IsShiny == clone.IsShiny && x.OT_Name == clone.OT_Name).ToList();
                 if (mg.Count > 0)
                     clone = TradeExtensions<PA8>.CherishHandler(mg.First(), info);

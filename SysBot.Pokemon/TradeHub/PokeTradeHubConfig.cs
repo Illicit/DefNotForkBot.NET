@@ -104,6 +104,10 @@ namespace SysBot.Pokemon
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public RollingRaidSettings RollingRaidSWSH { get; set; } = new();
 
+        [Category(BotEncounter)]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public OverworldSettingsSV OverworldSV { get; set; } = new();
+
         // Integration
 
         [Category(Integration)]
