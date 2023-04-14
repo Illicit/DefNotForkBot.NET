@@ -179,12 +179,13 @@ namespace SysBot.Pokemon
         public string GetSpecialPrintName(PKM pk)
         {
             var set = $"{(pk.ShinyXor == 0 ? "■ - " : pk.ShinyXor <= 16 ? "★ - " : "")
-                }{SpeciesName.GetSpeciesNameGeneration(pk.Species, 2, 9)
+                }Pkmn       : {SpeciesName.GetSpeciesNameGeneration(pk.Species, 2, 9)
                 }{TradeExtensions<PK9>.FormOutput(pk.Species, pk.Form, out _)
                 }\nIVs      : {pk.IV_HP}/{pk.IV_ATK}/{pk.IV_DEF}/{pk.IV_SPA}/{pk.IV_SPD}/{pk.IV_SPE
                 }\nNature   : {(Nature)pk.Nature
                 }\nGender   : {(Gender)pk.Gender
-                }\nBall     : {(Ball)pk.Ball}";
+                }\nBall     : {(Ball)pk.Ball
+                }\n";
             if (pk is IRibbonIndex r)
             {
                 var rstring = GetMarkName(r);
