@@ -206,7 +206,10 @@ namespace SysBot.Pokemon
             var enc = la.EncounterMatch;
             pk.CurrentFriendship = enc is EncounterStatic s ? s.EggCycles : pk.PersonalInfo.HatchCycles;
 
-            pk.RelearnMoves = (ushort[])enc.GetSuggestedRelearn(pk);
+            Span<ushort> relearn = stackalloc ushort[4];
+            la.GetSuggestedRelearnMoves(relearn, enc);
+            pk.SetRelearnMoves(relearn);
+
             pk.SetSuggestedMoves();
             pk.Move1_PPUps = pk.Move2_PPUps = pk.Move3_PPUps = pk.Move4_PPUps = 0;
             pk.SetMaximumPPCurrent(pk.Moves);
@@ -227,7 +230,12 @@ namespace SysBot.Pokemon
 
             lock (_syncLog)
             {
-                bool mark = pk is PK8 pk8 && pk8.HasEncounterMark();
+                bool mark = false;
+                if (pk is PK8)
+                    mark = pk is PK8 pk8 && pk8.HasEncounterMark();
+                if (pk is PK9)
+                    mark = pk is PK9 pk9 && pk9.HasEncounterMark();
+
                 var content = File.ReadAllText(filepath).Split('\n').ToList();
                 var splitTotal = content[0].Split(',');
                 content.RemoveRange(0, 3);

@@ -13,9 +13,6 @@ namespace SysBot.Pokemon
         [Browsable(false)]
         public override bool Shuffled => Distribution.Shuffled;
 
-        [Category(FeatureToggle), Description("Set your Switch console language here for SWSH bots to work properly. All consoles should be using the same language.")]
-        public ConsoleLanguageParameter ConsoleLanguage { get; set; }
-
         [Category(Operation)]
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public QueueSettings Queues { get; set; } = new();
@@ -55,6 +52,10 @@ namespace SysBot.Pokemon
         [Category(BotEncounter), Description("Stop conditions for EggBot, FossilBot, and EncounterBot.")]
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public StopConditionSettings StopConditions { get; set; } = new();
+
+        [Category(BotEncounter)]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public OverworldSettingsSV OverworldSV { get; set; } = new();
 
         [Category(BotEncounter)]
         [TypeConverter(typeof(ExpandableObjectConverter))]
@@ -103,10 +104,6 @@ namespace SysBot.Pokemon
         [Category(BotEncounter)]
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public RollingRaidSettings RollingRaidSWSH { get; set; } = new();
-
-        [Category(BotEncounter)]
-        [TypeConverter(typeof(ExpandableObjectConverter))]
-        public OverworldSettingsSV OverworldSV { get; set; } = new();
 
         // Integration
 
