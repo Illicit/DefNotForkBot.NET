@@ -654,10 +654,7 @@ namespace SysBot.Pokemon
             var description = Settings.RaidEmbedParameters[RotationCount].RaidDescription.Length > 0 ? $"{string.Join("\n", Settings.RaidEmbedParameters[RotationCount].RaidDescription)}\n\n\n" : "";
             if (description.Length > 4096)
                 description = description[..4096];
-
-        
-            if (names is null)
-                rcode = $"**{(Settings.CodeTheRaid ? await GetRaidCode(token).ConfigureAwait(false) : "Free For All")}**";
+ 
 
             if (disband) // Wait for trainer to load before disband
                 await Task.Delay(5_000, token).ConfigureAwait(false);
