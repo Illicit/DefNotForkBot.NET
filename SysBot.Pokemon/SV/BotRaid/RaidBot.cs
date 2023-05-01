@@ -701,7 +701,12 @@ namespace SysBot.Pokemon
         private async Task EnqueueEmbed(List<string>? names, string message, bool hatTrick, bool disband, bool upnext, bool starting, CancellationToken token)
         {
             // Get Code early
-            string rcode = await GetRaidCode(token).ConfigureAwait(false);
+            string rcode = String.Empty;
+
+            if (Settings.RaidEmbedParameters[RotationCount].CodeTheRaid)
+            {
+                rcode = await GetRaidCode(token).ConfigureAwait(false);
+            }
 
             // Title can only be up to 256 characters.
             var title = hatTrick && names is not null ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedParameters[RotationCount].Title.Length > 0 && starting ? $"Raid {RaidCount} starting! [{rcode}]" : Settings.RaidEmbedParameters[RotationCount].Title;

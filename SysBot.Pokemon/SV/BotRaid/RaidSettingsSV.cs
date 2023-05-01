@@ -94,6 +94,7 @@ namespace SysBot.Pokemon
             public Nature SpeciesNature { get; set; } = Nature.Random;
             public Ability SpeciesAbility { get; set; } = Ability.Adaptability;
             public TeraCrystalType CrystalType { get; set; } = TeraCrystalType.Base;
+            public bool CodeTheRaid { get; set; } = false;
             public bool CodeInInfo { get; set; } = false;
             public bool CodeIfSplitHidden { get; set; } = false;
             public bool SpriteAlternateArt { get; set; } = false;
