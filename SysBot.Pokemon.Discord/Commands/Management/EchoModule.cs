@@ -21,11 +21,12 @@ namespace SysBot.Pokemon.Discord
             public readonly Action<byte[], string, EmbedBuilder> RaidAction;
             public string EmbedResult = string.Empty;
 
-            public EchoChannel(ulong channelId, string channelName, Action<string> action)
+            public EchoChannel(ulong channelId, string channelName, Action<string> action, Action<byte[], string, EmbedBuilder> raidAction)
             {
                 ChannelID = channelId;
                 ChannelName = channelName;
                 Action = action;
+                RaidAction = raidAction;                
             }
         }
 
@@ -55,7 +56,14 @@ namespace SysBot.Pokemon.Discord
                     AddEchoChannel(c, ch.ID);
             }
 
-            EchoUtil.Echo("Added echo notification to Discord channel(s) on Bot startup.");
+            foreach (var ch in cfg.EncounterEchoChannels)
+            {
+                if (discord.GetChannel(ch.ID) is ISocketMessageChannel c)
+                    AddEncounterEchoChannel(c, ch.ID);
+            }
+
+            if (SysCordSettings.Settings.EchoOnBotStart)
+                EchoUtil.Echo("Added echo notification to Discord channel(s) on Bot startup.");
         }
 
         [Command("echoHere")]
@@ -80,13 +88,13 @@ namespace SysBot.Pokemon.Discord
 
         private static void AddEchoChannel(ISocketMessageChannel c, ulong cid)
         {
-            void Echo(string msg) => c.SendMessageAsync(msg);
-
-            Action<string> l = Echo;
-            Action<string, Embed> lb = EchoEmbed;
+            void Echo(string msg) => c.SendMessageAsync(msg);            
+            async Task RaidEmbedAsync(byte[] bytes, string fileName, EmbedBuilder embed) => await c.SendFileAsync(new MemoryStream(bytes), fileName, "", false, embed: embed.Build()).ConfigureAwait(false);
             Action<byte[], string, EmbedBuilder> rb = async (bytes, fileName, embed) => await RaidEmbedAsync(bytes, fileName, embed);
+            Action<string> l = Echo;
             EchoUtil.Forwarders.Add(l);
-            var entry = new EchoChannel(cid, c.Name, l);
+            EchoUtil.RaidForwarders.Add(rb);
+            var entry = new EchoChannel(cid, c.Name, l, rb);
             Channels.Add(cid, entry);
         }
 
@@ -153,6 +161,7 @@ namespace SysBot.Pokemon.Discord
                 return;
             }
             EchoUtil.Forwarders.Remove(echo.Action);
+            EchoUtil.RaidForwarders.Remove(echo.RaidAction);
             Channels.Remove(Context.Channel.Id);
             SysCordSettings.Settings.EchoChannels.RemoveAll(z => z.ID == id);
             await ReplyAsync($"Echoes cleared from channel: {Context.Channel.Name}").ConfigureAwait(false);
@@ -170,6 +179,7 @@ namespace SysBot.Pokemon.Discord
                 EchoUtil.Forwarders.Remove(entry.Action);
             }
             EchoUtil.Forwarders.RemoveAll(y => Channels.Select(x => x.Value.Action).Contains(y));
+            EchoUtil.RaidForwarders.RemoveAll(y => Channels.Select(x => x.Value.RaidAction).Contains(y));
             Channels.Clear();
             SysCordSettings.Settings.EchoChannels.Clear();
             await ReplyAsync("Echoes cleared from all channels!").ConfigureAwait(false);

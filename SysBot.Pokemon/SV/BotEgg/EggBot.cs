@@ -35,8 +35,7 @@ namespace SysBot.Pokemon
         private PK9 prevShiny = new();
         private static readonly PK9 Blank = new();
         private readonly byte[] BlankVal = { 0x01 };
-        private const string TextBox = "[[[[[main+43A7550]+20]+400]+48]+F0]";
-        private const string B1S1 = "[[[main+43A77C8]+108]+9B0]";
+        private const string TextBox = "[[[[[main+44E5310]+10]+670]+6D8]+30]";
         private byte[]? TextVal = Array.Empty<byte>();
         private ulong BoxStartOffset;
         private ulong OverworldOffset;
@@ -85,7 +84,7 @@ namespace SysBot.Pokemon
         {
 
             await SetCurrentBox(0, token).ConfigureAwait(false);
-            await SwitchConnection.WriteBytesMainAsync(BlankVal, PicnicMenu, token).ConfigureAwait(false);
+            await SwitchConnection.WriteBytesMainAsync(BlankVal, Offsets.LoadedIntoDesiredState, token).ConfigureAwait(false);
 
             var mode = Settings.EggBotMode;
             if (mode == EggMode.WaitAndClose && Settings.ContinueAfterMatch == ContinueAfterMatch.Continue)
@@ -382,9 +381,15 @@ namespace SysBot.Pokemon
             return pk;
         }
 
+        private async Task<int> PicnicState(CancellationToken token)
+        {
+            var Data = await SwitchConnection.ReadBytesMainAsync(Offsets.LoadedIntoDesiredState, 1, token).ConfigureAwait(false);
+            return Data[0]; // 1 when in picnic, 2 in sandwich menu, 3 when eating, 2 when done eating
+        }
+
         private async Task<bool> IsInPicnic(CancellationToken token)
         {
-            var Data = await SwitchConnection.ReadBytesMainAsync(PicnicMenu, 1, token).ConfigureAwait(false);
+            var Data = await SwitchConnection.ReadBytesMainAsync(Offsets.LoadedIntoDesiredState, 1, token).ConfigureAwait(false);
             return Data[0] == 0x01; // 1 when in picnic, 2 in sandwich menu, 3 when eating, 2 when done eating
         }
 
@@ -420,23 +425,35 @@ namespace SysBot.Pokemon
             for (int i = 0; i < 12; i++) // If everything is properly positioned
                 await Click(A, 0_800, token).ConfigureAwait(false);
 
-            bool inPicnic = await IsInPicnic(token).ConfigureAwait(false);
+            // Sandwich failsafe
+            for (int i = 0; i < 5; i++) //Attempt this several times to ensure it goes through
+                await SetStick(LEFT, 0, 30000, 1_000, token).ConfigureAwait(false); // Scroll to the absolute top
+            await SetStick(LEFT, 0, 0, 0, token).ConfigureAwait(false);
 
-            while (!inPicnic)
+            while (await PicnicState(token).ConfigureAwait(false) == 2) // Until we start eating the sandwich
             {
-                await Click(A, 3_000, token).ConfigureAwait(false);
-                inPicnic = await IsInPicnic(token).ConfigureAwait(false);
+                await SetStick(LEFT, 0, -5000, 0_300, token).ConfigureAwait(false); // Scroll down slightly and press A a few times; repeat until un-stuck
+                await SetStick(LEFT, 0, 0, 0, token).ConfigureAwait(false);
+
+                for (int i = 0; i < 6; i++)
+                    await Click(A, 0_800, token).ConfigureAwait(false);
             }
 
-            if (inPicnic)
-            {
-                await Task.Delay(2_500, token).ConfigureAwait(false);
-                await SetStick(LEFT, 0, -10000, 0_500, token).ConfigureAwait(false); // Face down to basket
-                await SetStick(LEFT, 0, 0, 0, token).ConfigureAwait(false);
+            while (await PicnicState(token).ConfigureAwait(false) == 3)  // eating the sandwich
                 await Task.Delay(1_000, token).ConfigureAwait(false);
-                await SetStick(LEFT, 0, 5000, 0_200, token).ConfigureAwait(false); // Face up to basket
-                await SetStick(LEFT, 0, 0, 0, token).ConfigureAwait(false);
-            }
+
+            sandwichcount++;
+            Log($"Sandwiches Made: {sandwichcount}");
+
+            while (!await IsInPicnic(token).ConfigureAwait(false)) // Acknowledge the sandwich and return to the picnic            
+                await Click(A, 5_000, token).ConfigureAwait(false); // Wait a long time to give the flag a chance to update and avoid sandwich re-entry            
+
+            await Task.Delay(2_500, token).ConfigureAwait(false);
+            await SetStick(LEFT, 0, -10000, 0_500, token).ConfigureAwait(false); // Face down to basket
+            await SetStick(LEFT, 0, 0, 0, token).ConfigureAwait(false);
+            await Task.Delay(1_000, token).ConfigureAwait(false);
+            await SetStick(LEFT, 0, 5000, 0_200, token).ConfigureAwait(false); // Face up to basket
+            await SetStick(LEFT, 0, 0, 0, token).ConfigureAwait(false);
         }
 
         private async Task GrabValues(CancellationToken token)
