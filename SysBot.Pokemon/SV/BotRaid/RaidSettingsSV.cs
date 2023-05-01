@@ -20,8 +20,8 @@ namespace SysBot.Pokemon
         [Category(Hosting), Description("Amount of raids before updating the ban list. If you want the global ban list off, set this to -1.")]
         public int RaidsBetweenUpdate { get; set; } = 3;
 
-        [Category(Hosting), Description("Raid embed title.")]
-        public string RaidEmbedTitle { get; set; } = "Tera Raid Notification";
+        [Category(Hosting), Description("Raid embed description. Enter your description, species, form, and if shiny here.")]
+        public List<RaidParameters> RaidEmbedParameters { get; set; } = new();
 
         [Category(Hosting), Description("Raid embed description. Enter your description, species, form, and if shiny here.")]
         public List<RaidParameters> RaidEmbedParameters { get; set; } = new();
@@ -52,9 +52,6 @@ namespace SysBot.Pokemon
 
         [Category(Hosting), Description("When enabled, the bot will restore current day seed to tomorrow's day seed.")]
         public bool KeepDaySeed { get; set; } = false;
-
-        [Category(FeatureToggle), Description("Raid seeds to rotate. Leave empty to ignore this.")]
-        public uint[] RaidSeedRotation { get; set; } = Array.Empty<uint>();
 
         [Category(FeatureToggle), Description("Set your Switch Date/Time format in the Date/Time settings. The day will automatically rollback by 1 if the Date changes.")]
         public DTFormat DateTimeFormat { get; set; } = DTFormat.MMDDYY;
@@ -99,14 +96,25 @@ namespace SysBot.Pokemon
 
         public class RaidParameters
         {
-            public override string ToString() => "Raid Parameters";
-            public string[] RaidDescription { get; set; } = { };
-            public Species RaidSpecies { get; set; } = Species.None;
-            public int RaidSpeciesForm { get; set; } = 0;
-            public bool RaidSpeciesIsShiny { get; set; } = true;
-            public string RaidSpeciesIVs { get; set; } = String.Empty;
-            public Nature RaidSpeciesNature { get; set; } = Nature.Random;
-            public Ability RaidSpeciesAbility { get; set; } = Ability.Adaptability;
+            public override string ToString() => $"{Title}";
+            public string Title { get; set; } = string.Empty;
+            public string[] Description { get; set; } = Array.Empty<string>();
+            public Species Species { get; set; } = Species.None;
+            public int SpeciesForm { get; set; } = 0;
+            public bool IsShiny { get; set; } = true;
+            public TeraCrystalType CrystalType { get; set; } = TeraCrystalType.Base;
+            public bool IsCoded { get; set; } = true;
+            public bool SpriteAlternateArt { get; set; } = false;
+            public uint Seed { get; set; } = 0x0;
+            public string[] PartyPK { get; set; } = Array.Empty<string>();
+        }
+
+        public enum TeraCrystalType: int
+        {
+            Base = 0,
+            Black = 1,
+            Distribution = 2,
+            Might = 3,
         }
     }    
 }
