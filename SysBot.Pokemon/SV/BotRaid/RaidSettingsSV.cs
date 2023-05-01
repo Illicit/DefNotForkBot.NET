@@ -23,9 +23,6 @@ namespace SysBot.Pokemon
         [Category(Hosting), Description("Raid embed description. Enter your description, species, form, and if shiny here.")]
         public List<RaidParameters> RaidEmbedParameters { get; set; } = new();
 
-        [Category(Hosting), Description("Raid embed description. Enter your description, species, form, and if shiny here.")]
-        public List<RaidParameters> RaidEmbedParameters { get; set; } = new();
-
         [Category(Hosting), Description("If true, the bot will use a random code for the raid.")]
         public bool CodeTheRaid { get; set; } = true;
         
@@ -102,6 +99,9 @@ namespace SysBot.Pokemon
             public Species Species { get; set; } = Species.None;
             public int SpeciesForm { get; set; } = 0;
             public bool IsShiny { get; set; } = true;
+            public string SpeciesIVs { get; set; } = String.Empty;
+            public Nature SpeciesNature { get; set; } = Nature.Random;
+            public Ability SpeciesAbility { get; set; } = Ability.Adaptability;
             public TeraCrystalType CrystalType { get; set; } = TeraCrystalType.Base;
             public bool IsCoded { get; set; } = true;
             public bool SpriteAlternateArt { get; set; } = false;

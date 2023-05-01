@@ -20,7 +20,6 @@ namespace SysBot.Pokemon
         private readonly RaidSettingsSV Settings;
         public ICountSettings Counts => Settings;
         public static ConcurrentQueue<(byte[]?, EmbedBuilder)> EmbedQueue { get; set; } = new();
-
         private RemoteControlAccessList RaiderWhiteList => Settings.RaiderWhiteList;
         private RemoteControlAccessList RaiderBanList => Settings.RaiderBanList;
 
@@ -316,7 +315,7 @@ namespace SysBot.Pokemon
             var todayoverride = BitConverter.GetBytes(TodaySeed);
             List<long> ptr = new(Offsets.TeraRaidBlockPointer);
             ptr[2] += 0x8;
-            await SwitchConnection.PointerPoke(todayoverride, ptr, CancellationToken.None).ConfigureAwait(false);           
+            await SwitchConnection.PointerPoke(todayoverride, ptr, CancellationToken.None).ConfigureAwait(false);
         }
 
         private async void OverrideSeedIndex(int index)
@@ -328,7 +327,7 @@ namespace SysBot.Pokemon
                 RotationCount = 0;
             byte[] inj = BitConverter.GetBytes(Settings.RaidEmbedParameters[RotationCount].Seed);
             var currseed = await SwitchConnection.PointerPeek(4, ptr, token).ConfigureAwait(false);
-            Log($"Replacing {BitConverter.ToString(currseed)} with {BitConverter.ToString(inj)}.");            
+            Log($"Replacing {BitConverter.ToString(currseed)} with {BitConverter.ToString(inj)}.");
             await SwitchConnection.PointerPoke(inj, ptr, token).ConfigureAwait(false);
 
             var ptr2 = ptr;
@@ -336,31 +335,10 @@ namespace SysBot.Pokemon
             var crystal = BitConverter.GetBytes((int)Settings.RaidEmbedParameters[RotationCount].CrystalType);
             var currcrystal = await SwitchConnection.PointerPeek(1, ptr2, token).ConfigureAwait(false);
             if (currcrystal != crystal)
-            {                
+            {
                 Log($"Replacing Raid Crystal type from {BitConverter.ToString(currcrystal)} to {BitConverter.ToString(crystal)}.");
                 await SwitchConnection.PointerPoke(crystal, ptr2, token).ConfigureAwait(false);
             }
-        }
-
-        private async Task CountRaids(List<(ulong, TradeMyStatus)>? trainers, bool rotate, CancellationToken token)
-        {
-            var todayoverride = BitConverter.GetBytes(TodaySeed);
-            var ptr = new long[] { 0x44BFBA8, 0x180, 0x48 };
-            await SwitchConnection.PointerPoke(todayoverride, ptr, CancellationToken.None).ConfigureAwait(false);
-        }
-
-        private async void OverrideSeedIndex(int index)
-        {
-            var ptr = new long[] { 0x44BFBA8, 0x180, 0x40 + ((index + 1) * 0x20) };
-            if (RotationCount >= Settings.RaidSeedRotation.Length)
-                RotationCount = 0;
-            byte[] inj = BitConverter.GetBytes(Settings.RaidSeedRotation[RotationCount]);
-            var currseed = await SwitchConnection.PointerPeek(4, ptr, CancellationToken.None).ConfigureAwait(false);
-            Log($"Replacing {BitConverter.ToString(currseed)} with {BitConverter.ToString(inj)}");
-            var ptr2 = new long[] { 0x44BFBA8, 0x180, 0x40 + ((index + 1) * 0x20) - 0x10 };
-            await SwitchConnection.PointerPoke(seedList[index], ptr2, CancellationToken.None).ConfigureAwait(false);
-            await Task.Delay(0_500, CancellationToken.None).ConfigureAwait(false);
-            await SwitchConnection.PointerPoke(inj, ptr, CancellationToken.None).ConfigureAwait(false);
         }
 
         private async Task CountRaids(List<(ulong, TradeMyStatus)>? trainers, bool rotate, CancellationToken token)
@@ -370,8 +348,8 @@ namespace SysBot.Pokemon
             for (int i = 0; i < 69; i++)
             {
                 var seed = BitConverter.ToUInt32(data.Slice(32 + (i * 32), 4));
-                if (seed != 0)                
-                    seeds.Add(seed);                
+                if (seed != 0)
+                    seeds.Add(seed);
                 if (seed == 0)
                 {
                     Log($"Seed rotation will occur at index {i}");
@@ -409,7 +387,7 @@ namespace SysBot.Pokemon
                             Log($"Rotation Count = Raid Parameter Count. Resetting Rotation Count to {RotationCount}");
                         }
 
-                        await EnqueueEmbed(null, "", false, false, true, token).ConfigureAwait(false);
+                        await EnqueueEmbed(null, "", false, false, true, false, token).ConfigureAwait(false);
                     }
 
                     return;
@@ -511,7 +489,7 @@ namespace SysBot.Pokemon
             var data = await SwitchConnection.PointerPeek(6, Offsets.TeraRaidCodePointer, token).ConfigureAwait(false);
             TeraRaidCode = Encoding.ASCII.GetString(data);
             Log($"Raid Code: {TeraRaidCode}");
-            return $"{TeraRaidCode}";
+            return $"\n{TeraRaidCode}\n";
         }
 
         private async Task<bool> CheckIfTrainerBanned(TradeMyStatus trainer, ulong nid, int player, bool updateBanList, CancellationToken token)
@@ -520,40 +498,6 @@ namespace SysBot.Pokemon
             if (!RaidTracker.ContainsKey(nid))
                 RaidTracker.Add(nid, 0);
 
-            int val = 0;
-            var msg = string.Empty;
-            var banResultCC = Settings.RaidsBetweenUpdate == -1 ? (false, "") : await BanService.IsRaiderBanned(trainer.OT, Settings.BanListURL, Connection.Label, updateBanList).ConfigureAwait(false);
-            var banResultCFW = RaiderBanList.List.FirstOrDefault(x => x.ID == nid);
-            bool isBanned = banResultCC.Item1 || banResultCFW != default;
-
-            bool blockResult = false;
-            var blockCheck = RaidTracker.ContainsKey(nid);
-            if (blockCheck)
-            {
-                RaidTracker.TryGetValue(nid, out val);
-                if (val >= Settings.CatchLimit && Settings.CatchLimit != 0) // Soft pity - block user
-                {
-                    blockResult = true;
-                    RaidTracker[nid] = val + 1;
-                    Log($"Player: {trainer.OT} current penalty count: {val}.");
-                }
-                if (val == Settings.CatchLimit + 2 && Settings.CatchLimit != 0) // Hard pity - ban user
-                {
-                    msg = $"{trainer.OT} is now banned for repeatedly attempting to go beyond the catch limit for {Settings.RaidEmbedParameters[RotationCount].Species} on {DateTime.Now}.";
-                    Log(msg);
-                    RaiderBanList.List.Add(new() { ID = nid, Name = trainer.OT, Comment = msg });
-                    blockResult = false;
-                    await EnqueueEmbed(null, $"Penalty #{val}\n" + msg, false, true, false, token).ConfigureAwait(false);
-                    return true;
-                }
-                if (blockResult && !isBanned)
-                {
-                    msg = $"Penalty #{val}\n{trainer.OT} has already reached the catch limit.\nPlease do not join again.\nRepeated attempts to join like this will result in a ban from future raids.";
-                    Log(msg);
-                    await EnqueueEmbed(null, msg, false, true, false, token).ConfigureAwait(false);
-                    return true;
-                }
-            }
             if (RaiderWhiteList.Contains(nid))
             {
                 Log($"Player {player}: {trainer.OT} | NID: {nid} is whitelisted");
@@ -579,7 +523,7 @@ namespace SysBot.Pokemon
                     }
                     if (val == Settings.CatchLimit + 2 && Settings.CatchLimit != 0) // Hard pity - ban user
                     {
-                        msg = $"{trainer.OT} is now banned for repeatedly attempting to go beyond the catch limit for {Settings.RaidEmbedParameters[RotationCount].RaidSpecies} on {DateTime.Now}.";
+                        msg = $"{trainer.OT} is now banned for repeatedly attempting to go beyond the catch limit for {Settings.RaidEmbedParameters[RotationCount].Species} on {DateTime.Now}.";
                         Log(msg);
                         RaiderBanList.List.Add(new() { ID = nid, Name = trainer.OT, Comment = msg });
                         blockResult = false;
@@ -758,16 +702,16 @@ namespace SysBot.Pokemon
         {
             // Get Code early
             string rcode = string.Empty;
+
             // Title can only be up to 256 characters.
-            var title = hatTrick && names is not null && names[0] == "Alice" ? $"**💜💜💜 🪄🎩✨ Thine beloved {names[0]} with the Hat Trick ✨🎩🪄 💜💜💜**" : hatTrick && names is not null && names[0] == "Alice" ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedTitle.Length > 0 && starting ? $"**Raid: {RaidCount} Starting! [{rcode}]**" : $"**{Settings.RaidEmbedTitle}**";
+            var title = hatTrick && names is not null ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedParameters[RotationCount].Title.Length > 0 && starting ? $"Raid {RaidCount} starting! [{rcode}]" : Settings.RaidEmbedParameters[RotationCount].Title;
             if (title.Length > 256)
                 title = title[..256];
 
             // Description can only be up to 4096 characters.
-            var description = Settings.RaidEmbedParameters[RotationCount].RaidDescription.Length > 0 ? $"{string.Join("\n", Settings.RaidEmbedParameters[RotationCount].RaidDescription)}\n\n\n" : "";
+            var description = Settings.RaidEmbedParameters[RotationCount].Description.Length > 0 ? $"{string.Join("\n", Settings.RaidEmbedParameters[RotationCount].Description)}\n\n\n" : "";
             if (description.Length > 4096)
                 description = description[..4096];
- 
 
             if (disband) // Wait for trainer to load before disband
                 await Task.Delay(5_000, token).ConfigureAwait(false);
@@ -776,16 +720,16 @@ namespace SysBot.Pokemon
             if (Settings.TakeScreenshot && !upnext)
                 bytes = await SwitchConnection.PixelPeek(token).ConfigureAwait(false) ?? Array.Empty<byte>();
 
-            string disclaimer = Settings.RaidSeedRotation.Length > 1 ? "Disclaimer: Raids are on rotation via seed injection.\n" : "";
+            string disclaimer = Settings.RaidEmbedParameters.Count > 1 ? "Disclaimer: Raids are on rotation via seed injection.\n" : "";
 
             if (upnext)
                 title = "Preparing next raid...";
 
             var embed = new EmbedBuilder()
             {
-                Title = disband ? "**Raid cancelled**" : title,
-                Description = disband ? message : !starting ? description + $"**LIMIT: {Settings.CatchLimit}**\n**リミット: {Settings.CatchLimit}**\n**极限: {Settings.CatchLimit}**᲼\n᲼" : description,
-                Color = disband ? Color.Red : hatTrick ? Color.DarkMagenta : starting ? Color.Purple : Color.Gold,
+                Title = disband ? $"**Raid canceled: [{TeraRaidCode}]**" : title,
+                Description = disband ? message : description,
+                Color = disband ? Color.Red : hatTrick ? Color.Purple : Color.Green,
                 ImageUrl = bytes.Length > 0 ? "attachment://zap.jpg" : default,
             }.WithFooter(new EmbedFooterBuilder()
             {
@@ -804,17 +748,21 @@ namespace SysBot.Pokemon
                 {
                     embed.AddField("**Waiting in lobby!**", $"Raid code: ||{rcode.Substring(0, rcode.Length / 2)}||᲼+᲼||{rcode.Substring(rcode.Length / 2)}||");
                 }
-                else
+                else if (Settings.CodeTheRaid)
                 {
                     embed.AddField("**Waiting in lobby!**", $"Raid code: {rcode}");
+                }
+                else
+                {
+                    embed.AddField("**Waiting in lobby!**", "Free For All");
                 }
             }
 
             if (!disband && !starting)
             {
-                embed.AddField("IVs:", $"{Settings.RaidEmbedParameters[RotationCount].RaidSpeciesIVs}", true);
-                embed.AddField("Nature:", $"{Settings.RaidEmbedParameters[RotationCount].RaidSpeciesNature}", true);
-                embed.AddField("Ability:", $"{Settings.RaidEmbedParameters[RotationCount].RaidSpeciesAbility}", true);
+                embed.AddField("IVs:", $"{Settings.RaidEmbedParameters[RotationCount].SpeciesIVs}", true);
+                embed.AddField("Nature:", $"{Settings.RaidEmbedParameters[RotationCount].SpeciesNature}", true);
+                embed.AddField("Ability:", $"{Settings.RaidEmbedParameters[RotationCount].SpeciesAbility}", true);
             }
 
             if (!disband && names is not null && !upnext)
@@ -835,28 +783,6 @@ namespace SysBot.Pokemon
                 embed.AddField($"**Raid #{RaidCount} is starting!**", players);
             }
 
-            var turl = string.Empty;
-            var form = string.Empty;
-
-            Log($"Rotation Count: {RotationCount} | Species is {Settings.RaidEmbedParameters[RotationCount].RaidSpecies}");
-            PK9 pk = new()
-            {
-                Species = (ushort)Settings.RaidEmbedParameters[RotationCount].RaidSpecies,
-                Form = (byte)Settings.RaidEmbedParameters[RotationCount].RaidSpeciesForm
-            };
-            if (pk.Form != 0)
-                form = $"-{pk.Form}";
-            if (Settings.RaidEmbedParameters[RotationCount].RaidSpeciesIsShiny == true)
-                CommonEdits.SetIsShiny(pk, true);
-            else
-                CommonEdits.SetIsShiny(pk, false);
-
-            turl = TradeExtensions<PK9>.PokeImg(pk, false, false);
-
-            var fileName = $"raidecho{RotationCount}.jpg";
-            embed.ThumbnailUrl = turl;
-            embed.WithImageUrl($"attachment://{fileName}");
-            EchoUtil.RaidEmbed(bytes, fileName, embed);
             var turl = string.Empty;
             var form = string.Empty;
 
