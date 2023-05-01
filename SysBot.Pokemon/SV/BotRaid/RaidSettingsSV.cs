@@ -23,15 +23,6 @@ namespace SysBot.Pokemon
         [Category(Hosting), Description("Raid embed description. Enter your description, species, form, and if shiny here.")]
         public List<RaidParameters> RaidEmbedParameters { get; set; } = new();
 
-        [Category(Hosting), Description("If true, the bot will use a random code for the raid.")]
-        public bool CodeTheRaid { get; set; } = true;
-        
-        [Category(FeatureToggle), Description("If true, the bot will post the raid code in embed info.")]
-        public bool CodeInInfo { get; set; } = false;
-
-        [Category(FeatureToggle), Description("If true, split the code and hide with spolier tag")]
-        public bool CodeIfSplitHidden { get; set; } = false;
-
         [Category(Hosting), Description("Catch limit per player before they get added to the ban list automatically. If set to 0 this setting will be ignored.")]
         public int CatchLimit { get; set; } = 0;
 
@@ -103,7 +94,8 @@ namespace SysBot.Pokemon
             public Nature SpeciesNature { get; set; } = Nature.Random;
             public Ability SpeciesAbility { get; set; } = Ability.Adaptability;
             public TeraCrystalType CrystalType { get; set; } = TeraCrystalType.Base;
-            public bool IsCoded { get; set; } = true;
+            public bool CodeInInfo { get; set; } = false;
+            public bool CodeIfSplitHidden { get; set; } = false;
             public bool SpriteAlternateArt { get; set; } = false;
             public uint Seed { get; set; } = 0x0;
             public string[] PartyPK { get; set; } = Array.Empty<string>();

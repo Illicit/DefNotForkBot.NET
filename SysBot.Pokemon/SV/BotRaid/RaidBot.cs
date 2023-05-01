@@ -458,7 +458,7 @@ namespace SysBot.Pokemon
             await Click(A, 3_000, token).ConfigureAwait(false);
             await Click(A, 3_000, token).ConfigureAwait(false);
 
-            if (!Settings.RaidEmbedParameters[RotationCount].IsCoded)
+            if (!Settings.RaidEmbedParameters[RotationCount].CodeTheRaid)
                 await Click(DDOWN, 1_000, token).ConfigureAwait(false);
 
             await Click(A, 8_000, token).ConfigureAwait(false);
@@ -701,7 +701,7 @@ namespace SysBot.Pokemon
         private async Task EnqueueEmbed(List<string>? names, string message, bool hatTrick, bool disband, bool upnext, bool starting, CancellationToken token)
         {
             // Get Code early
-            string rcode = string.Empty;
+            string rcode = await GetRaidCode(token).ConfigureAwait(false);
 
             // Title can only be up to 256 characters.
             var title = hatTrick && names is not null ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedParameters[RotationCount].Title.Length > 0 && starting ? $"Raid {RaidCount} starting! [{rcode}]" : Settings.RaidEmbedParameters[RotationCount].Title;
@@ -742,13 +742,13 @@ namespace SysBot.Pokemon
                 embed.AddField("Appeal Here", "[#tera-raid-bans](https://discord.com/channels/695809740428673034/1050667958562738197)", true);
             }
 
-            if (!disband && names is null && !upnext && Settings.CodeInInfo)
+            if (!disband && names is null && !upnext && Settings.RaidEmbedParameters[RotationCount].CodeInInfo)
             {
-                if (Settings.CodeIfSplitHidden && rcode.Length == 6)
+                if (Settings.RaidEmbedParameters[RotationCount].CodeIfSplitHidden && rcode.Length == 6)
                 {
                     embed.AddField("**Waiting in lobby!**", $"Raid code: ||{rcode.Substring(0, rcode.Length / 2)}||᲼+᲼||{rcode.Substring(rcode.Length / 2)}||");
                 }
-                else if (Settings.CodeTheRaid)
+                else if (Settings.RaidEmbedParameters[RotationCount].CodeInInfo)
                 {
                     embed.AddField("**Waiting in lobby!**", $"Raid code: {rcode}");
                 }
