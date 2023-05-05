@@ -395,6 +395,12 @@ namespace SysBot.Pokemon
 
                 Log("We lost the raid...");
                 LossCount++;
+
+                if (Settings.RaidEmbedParameters.Count > 1)
+                {
+                    Log("Moving on to the next rotation...");
+                    RotationCount++;
+                }
             }
         }
 
@@ -489,7 +495,7 @@ namespace SysBot.Pokemon
             var data = await SwitchConnection.PointerPeek(6, Offsets.TeraRaidCodePointer, token).ConfigureAwait(false);
             TeraRaidCode = Encoding.ASCII.GetString(data);
             Log($"Raid Code: {TeraRaidCode}");
-            return $"\n{TeraRaidCode}\n";
+            return $"{TeraRaidCode}";
         }
 
         private async Task<bool> CheckIfTrainerBanned(TradeMyStatus trainer, ulong nid, int player, bool updateBanList, CancellationToken token)
@@ -733,7 +739,7 @@ namespace SysBot.Pokemon
             var embed = new EmbedBuilder()
             {
                 Title = disband ? $"**Raid canceled: [{TeraRaidCode}]**" : title,
-                Description = disband ? message : description,
+                Description = disband ? message : !starting ? description + $"**LIMIT: {Settings.CatchLimit}**\n**リミット: {Settings.CatchLimit}**\n**极限: {Settings.CatchLimit}**᲼\n᲼" : description,
                 Color = disband ? Color.Red : hatTrick ? Color.Purple : Color.Green,
                 ImageUrl = bytes.Length > 0 ? "attachment://zap.jpg" : default,
             }.WithFooter(new EmbedFooterBuilder()
@@ -753,13 +759,9 @@ namespace SysBot.Pokemon
                 {
                     embed.AddField("**Waiting in lobby!**", $"Raid code: ||{rcode.Substring(0, rcode.Length / 2)}||᲼+᲼||{rcode.Substring(rcode.Length / 2)}||");
                 }
-                else if (Settings.RaidEmbedParameters[RotationCount].CodeInInfo)
-                {
-                    embed.AddField("**Waiting in lobby!**", $"Raid code: {rcode}");
-                }
                 else
                 {
-                    embed.AddField("**Waiting in lobby!**", "Free For All");
+                    embed.AddField("**Raid Code:**", $"{rcode}");
                 }
             }
 
@@ -909,7 +911,7 @@ namespace SysBot.Pokemon
             // Switch Logo and game load screen
             await Task.Delay(16_000 + timing.ExtraTimeLoadGame, token).ConfigureAwait(false);
 
-            if (Settings.RaidEmbedParameters.Count > 1 && Settings.RaidEmbedParameters[RotationCount].Seed != default)
+            if (Settings.RaidEmbedParameters.Count > 1)
             {
                 OverrideSeedIndex(SeedIndexToReplace);
                 Log("Seed override completed.");
