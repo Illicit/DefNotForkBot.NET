@@ -31,7 +31,7 @@ namespace SysBot.Pokemon
         private int sandwichcount = 0;
         private const int InjectBox = 0;
         private const int InjectSlot = 0;
-        private readonly uint EggData = 0x044C12D8;
+        private readonly uint EggData = 0x044C3348;
         private PK9 prevShiny = new();
         private static readonly PK9 Blank = new();
         private readonly byte[] BlankVal = { 0x01 };
