@@ -27,13 +27,15 @@ namespace SysBot.Pokemon
 
         public IReadOnlyList<long> TeraRaidCodePointer { get; } = new long[] { 0x44DFCA8, 0x10, 0x78, 0x10, 0x1A9 };
         public IReadOnlyList<long> TeraRaidBlockPointer { get; } = new long[] { 0x44C1C18, 0x180, 0x40 };
-        public ulong TeraLobby { get; } = 0x04176430;
-        public ulong LoadedIntoDesiredState { get; } = 0x04553020;
-
-        public IReadOnlyList<long> CollisionPointer { get; } = new long[] { 0x4504940, 0x28, 0x48, 0x0, 0x08, 0x80 };
-        public IReadOnlyList<long> PlayerOnMountPointer { get; } = new long[] { 0x4504940, 0x28, 0x48, 0x0, 0x08, 0x70 };
-        public IReadOnlyList<long> MobilityPointer { get; } = new long[] { 0x44E2D60, 0x60, 0x0, 0xB8, 0x20 };
+        public IReadOnlyList<long> CollisionPointer { get; } = new long[] { 0x45069E0, 0x28, 0x48, 0x0, 0x08, 0x80 };
+        public IReadOnlyList<long> PlayerOnMountPointer { get; } = new long[] { 0x45069E0, 0x28, 0x48, 0x0, 0x08, 0x70 };
+        public IReadOnlyList<long> MobilityPointer { get; } = new long[] { 0x44E4E00, 0x60, 0x0, 0xB8, 0x20 };
 
         public IReadOnlyList<long> BlockKeyPointer = new long[] { 0x44B71A8, 0xD8, 0x0, 0x0, 0x30, 0x0 };
+        public IReadOnlyList<long> TextBoxPointer { get; } = new long[] { 0x44E73B0, 0x10, 0x670, 0x6D8, 0x30 };
+        
+        public uint EggData = 0x044C3348;
+        public ulong TeraLobbyIsConnected { get; } = 0x04176430;
+        public ulong LoadedIntoDesiredState { get; } = 0x04553020;
     }
 }

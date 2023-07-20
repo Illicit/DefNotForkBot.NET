@@ -31,14 +31,13 @@ namespace SysBot.Pokemon
         private int sandwichcount = 0;
         private const int InjectBox = 0;
         private const int InjectSlot = 0;
-        private readonly uint EggData = 0x044C3348;
         private PK9 prevShiny = new();
         private static readonly PK9 Blank = new();
         private readonly byte[] BlankVal = { 0x01 };
-        private const string TextBox = "[[[[[main+44E5310]+10]+670]+6D8]+30]";
         private byte[]? TextVal = Array.Empty<byte>();
         private ulong BoxStartOffset;
         private ulong OverworldOffset;
+        private ulong TextBoxOffset;
 
         public override async Task MainLoop(CancellationToken token)
         {
@@ -180,12 +179,12 @@ namespace SysBot.Pokemon
                 var waiting = 0;                
                 while (DateTime.Now < endTime)
                 {
-                    var pk = await ReadPokemonSV(EggData, 344, token).ConfigureAwait(false);
+                    var pk = await ReadPokemonSV(Offsets.EggData, 344, token).ConfigureAwait(false);
                     while (pk == prevShiny || pk == null || pkprev.EncryptionConstant == pk.EncryptionConstant || (Species)pk.Species == Species.None)
                     {
                         waiting++;
                         await Task.Delay(1_500, token).ConfigureAwait(false);
-                        pk = await ReadPokemonSV(EggData, 344, token).ConfigureAwait(false);
+                        pk = await ReadPokemonSV(Offsets.EggData, 344, token).ConfigureAwait(false);
                         if (mode == EggMode.WaitAndClose)
                         {
                             if (waiting == 120)
@@ -458,8 +457,7 @@ namespace SysBot.Pokemon
 
         private async Task GrabValues(CancellationToken token)
         {
-            var ofs = await GetPointerAddress(TextBox, token).ConfigureAwait(false);
-            TextVal = await SwitchConnection.ReadBytesAbsoluteAsync(ofs, 4, token).ConfigureAwait(false);
+            TextVal = await SwitchConnection.ReadBytesAbsoluteAsync(TextBoxOffset, 4, token).ConfigureAwait(false);
             await Click(A, 0_500, token).ConfigureAwait(false);
         }
 
@@ -467,13 +465,13 @@ namespace SysBot.Pokemon
         {
             BoxStartOffset = await SwitchConnection.PointerAll(Offsets.BoxStartPokemonPointer, token).ConfigureAwait(false);
             OverworldOffset = await SwitchConnection.PointerAll(Offsets.OverworldPointer, token).ConfigureAwait(false);
+            TextBoxOffset = await SwitchConnection.PointerAll(Offsets.TextBoxPointer, token).ConfigureAwait(false);
             Log("Caching offsets complete!");
         }
 
         private async Task RetrieveEgg(bool match, CancellationToken token)
         {
-            var ofs = await GetPointerAddress(TextBox, token).ConfigureAwait(false);
-            var text = await SwitchConnection.ReadBytesAbsoluteAsync(ofs, 4, token).ConfigureAwait(false);
+            var text = await SwitchConnection.ReadBytesAbsoluteAsync(TextBoxOffset, 4, token).ConfigureAwait(false);
 
             Log("There's an egg!");
             if (TextVal != null)
@@ -490,7 +488,7 @@ namespace SysBot.Pokemon
                         if (match == true)
                             await SetBoxPokemonEgg(Blank, InjectBox, InjectSlot, token).ConfigureAwait(false);
                     }
-                    text = await SwitchConnection.ReadBytesAbsoluteAsync(ofs, 4, token).ConfigureAwait(false);
+                    text = await SwitchConnection.ReadBytesAbsoluteAsync(TextBoxOffset, 4, token).ConfigureAwait(false);
                 }
             }
         }

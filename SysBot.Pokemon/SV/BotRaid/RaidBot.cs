@@ -629,7 +629,7 @@ namespace SysBot.Pokemon
 
         private async Task<bool> IsConnectedToLobby(CancellationToken token)
         {
-            var data = await SwitchConnection.ReadBytesMainAsync(Offsets.TeraLobby, 1, token).ConfigureAwait(false);
+            var data = await SwitchConnection.ReadBytesMainAsync(Offsets.TeraLobbyIsConnected, 1, token).ConfigureAwait(false);
             return data[0] != 0x00; // 0 when in lobby but not connected
         }
 
