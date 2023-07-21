@@ -426,30 +426,8 @@ namespace SysBot.Pokemon
             if (fullSize)
                 baseLink = "https://raw.githubusercontent.com/zyro670/HomeImages/master/512x512/poke_capture_0001_000_mf_n_00000000_f_n.png".Split('_');
             else baseLink = "https://raw.githubusercontent.com/zyro670/HomeImages/master/128x128/poke_capture_0001_000_mf_n_00000000_f_n.png".Split('_');
-            string newbase = string.Empty;
-            string pkmform = string.Empty;
-            if (pkm.Form != 0)
-                pkmform = $"-{pkm.Form}";
 
-            if ((Species)pkm.Species >= Species.Sprigatito || (Species)pkm.Species == Species.Wooper && pkm.Form != 0 || (Species)pkm.Species == Species.Tauros && pkm.Form != 0)
-            {
-                if (pkm.IsShiny)
-                    newbase = $"https://raw.githubusercontent.com/zyro670/PokeTextures/main/Placeholder_Sprites/scaled_up_sprites/Shiny/" + $"{pkm.Species}{pkmform}" + ".png";
-                else if (!pkm.IsShiny)
-                    newbase = $"https://raw.githubusercontent.com/zyro670/PokeTextures/main/Placeholder_Sprites/scaled_up_sprites/" + $"{pkm.Species}{pkmform}" + ".png";
-                return newbase;
-            }
-
-            if ((Species)pkm.Species == Species.Enamorus)
-            {
-                if (!pkm.IsShiny)
-                    newbase = "https://raw.githubusercontent.com/zyro670/HomeImages/master/128x128/poke_capture_0905_000_fd_n_00000000_f_n.png";
-                else
-                    newbase = "https://raw.githubusercontent.com/zyro670/HomeImages/master/128x128/poke_capture_0905_000_fd_n_00000000_f_r.png";
-                return newbase;
-            }
-
-            if (Enum.IsDefined(typeof(GenderDependent), pkm.Species) && !canGmax && pkm.Form == 0)
+            if (Enum.IsDefined(typeof(GenderDependent), pkm.Species) && !canGmax && pkm.Form is 0)
             {
                 if (pkm.Gender == 0 && pkm.Species != (int)Species.Torchic)
                     md = true;
@@ -464,7 +442,29 @@ namespace SysBot.Pokemon
 
             };
 
-            baseLink[2] = pkm.Species < 10 ? $"000{pkm.Species}" : pkm.Species < 100 && pkm.Species > 9 ? $"00{pkm.Species}" : $"0{pkm.Species}";
+            if (pkm.Species is (ushort)Species.Sneasel)
+            {
+                if (pkm.Gender is 0)
+                    md = true;
+                else fd = true;
+            }
+
+            if (pkm.Species is (ushort)Species.Basculegion)
+            {
+                if (pkm.Gender is 0)
+                {
+                    md = true;
+                    pkm.Form = 0;
+                }
+                else
+                    pkm.Form = 1;
+
+                string s = pkm.IsShiny ? "r" : "n";
+                string g = md && pkm.Gender is not 1 ? "md" : "fd";
+                return $"https://raw.githubusercontent.com/zyro670/HomeImages/master/128x128/poke_capture_0" + $"{pkm.Species}" + "_00" + $"{pkm.Form}" + "_" + $"{g}" + "_n_00000000_f_" + $"{s}" + ".png";
+            }
+
+            baseLink[2] = pkm.Species < 10 ? $"000{pkm.Species}" : pkm.Species < 100 && pkm.Species > 9 ? $"00{pkm.Species}" : pkm.Species >= 1000 ? $"{pkm.Species}" : $"0{pkm.Species}";
             baseLink[3] = pkm.Form < 10 ? $"00{form}" : $"0{form}";
             baseLink[4] = pkm.PersonalInfo.OnlyFemale ? "fo" : pkm.PersonalInfo.OnlyMale ? "mo" : pkm.PersonalInfo.Genderless ? "uk" : fd ? "fd" : md ? "md" : "mf";
             baseLink[5] = canGmax ? "g" : "n";
@@ -498,5 +498,10 @@ namespace SysBot.Pokemon
             bool different = criteriaList.Skip(1).Any(x => x.Species != criteriaList.First().Species);
             return different;
         }
+
+        public static PK8 SWSHTrade = new();
+        public static PB8 BDSPTrade = new();
+        public static PA8 LATrade = new();
+        public static PK9 SVTrade = new();
     }
 }

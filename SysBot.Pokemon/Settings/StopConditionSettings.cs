@@ -47,9 +47,6 @@ namespace SysBot.Pokemon
         [Category(StopConditions), Description("If set to TRUE, matches both ShinyTarget and TargetIVs settings. Otherwise, looks for either ShinyTarget or TargetIVs match.")]
         public bool MatchShinyAndIV { get; set; } = true;
 
-        [Category(StopConditions), Description("Enter a Discord channel ID(s) to post shiny result embeds to. Feature has to be initialized via \"$sve\" for EggBotSV or \"$ae\" for ArceusBot after every client restart.")]
-        public string ResultsEmbedChannels { get; set; } = string.Empty;
-
         [Category(StopConditions), Description("If not empty, the provided string will be prepended to the result found log message to Echo alerts for whomever you specify. For Discord, use <@userIDnumber> to mention.")]
         public string MatchFoundEchoMention { get; set; } = string.Empty;
 
@@ -202,7 +199,8 @@ namespace SysBot.Pokemon
             " the Peckish"," the Sleepy"," the Dozy"," the Early Riser"," the Cloud Watcher"," the Sodden"," the Thunderstruck"," the Snow Frolicker"," the Shivering"," the Parched"," the Sandswept"," the Mist Drifter",
             " the Chosen One"," the Catch of the Day"," the Curry Connoisseur"," the Sociable"," the Recluse"," the Rowdy"," the Spacey"," the Anxious"," the Giddy"," the Radiant"," the Serene"," the Feisty"," the Daydreamer",
             " the Joyful"," the Furious"," the Beaming"," the Teary-Eyed"," the Chipper"," the Grumpy"," the Scholar"," the Rampaging"," the Opportunist"," the Stern"," the Kindhearted"," the Easily Flustered"," the Driven",
-            " the Apathetic"," the Arrogant"," the Reluctant"," the Humble"," the Pompous"," the Lively"," the Worn-Out",
+            " the Apathetic"," the Arrogant"," the Reluctant"," the Humble"," the Pompous"," the Lively"," the Worn-Out", " of the Distant Past", " the Twinkling Star", " the Paldea Champion", " the Great", " the Teeny", " the Treasure Hunter",
+            " the Reliable Partner", " the Gourmet", " the One-in-a-Million", " the Former Alpha", " the Unrivaled", " the Former Titan",
         };
 
         public static void ReadUnwantedMarks(StopConditionSettings settings, out IReadOnlyList<string> marks) =>
@@ -225,6 +223,28 @@ namespace SysBot.Pokemon
             string alpha = string.Empty;
             if (pk.IsAlpha) alpha = $"Alpha - ";
             var set = $"\n{alpha}{(pk.ShinyXor == 0 ? "■ - " : pk.ShinyXor <= 16 ? "★ - " : "") }{SpeciesName.GetSpeciesNameGeneration(pk.Species, 2, 8)}{TradeExtensions<PK8>.FormOutput(pk.Species, pk.Form, out _)}\nNature: {(Nature)pk.Nature} | Gender: {(Gender)pk.Gender}\nEC: {pk.EncryptionConstant:X8} | PID: {pk.PID:X8}\nIVs: {pk.IV_HP}/{pk.IV_ATK}/{pk.IV_DEF}/{pk.IV_SPA}/{pk.IV_SPD}/{pk.IV_SPE}";
+            return set;
+        }
+
+        public string GetRaidPrintName(PKM pk)
+        {
+            string markEntryText = "";
+            HasMark((IRibbonIndex)pk, out RibbonIndex mark);
+            if (mark == RibbonIndex.MarkMightiest)
+                markEntryText = "the Unrivaled";
+            string gender = pk.Gender == 0 ? " - ♂" : pk.Gender == 1 ? " - ♀ " : " - ⚥";
+            if (pk is PK9 pkl)
+            {
+                if (pkl.Scale == 0)
+                    markEntryText = " the Teeny";
+                if (pkl.Scale == 255)
+                    markEntryText = " the Great";
+            }
+            var set = $"{(pk.ShinyXor == 0 ? "■ - " : pk.ShinyXor <= 16 ? "★ - " : "")}{SpeciesName.GetSpeciesNameGeneration(pk.Species, 2, 9)}{TradeExtensions<PK9>.FormOutput(pk.Species, pk.Form, out _)}{markEntryText}{gender}\nIVs: {pk.IV_HP}/{pk.IV_ATK}/{pk.IV_DEF}/{pk.IV_SPA}/{pk.IV_SPD}/{pk.IV_SPE}\nNature: {(Nature)pk.Nature} | Ability: {(Ability)pk.Ability}";
+            if (pk is PK9 pk9)
+            {
+                set += $"\nScale: {PokeSizeDetailedUtil.GetSizeRating(pk9.Scale)} ({pk9.Scale})";
+            }
             return set;
         }
     }

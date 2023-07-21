@@ -67,7 +67,7 @@ namespace SysBot.Pokemon.WinForms
             this.TC_Main.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.TC_Main.Name = "TC_Main";
             this.TC_Main.SelectedIndex = 0;
-            this.TC_Main.Size = new System.Drawing.Size(834, 511);
+            this.TC_Main.Size = new System.Drawing.Size(734, 511);
             this.TC_Main.TabIndex = 3;
             // 
             // Tab_Bots
@@ -81,7 +81,7 @@ namespace SysBot.Pokemon.WinForms
             this.Tab_Bots.Location = new System.Drawing.Point(4, 24);
             this.Tab_Bots.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Tab_Bots.Name = "Tab_Bots";
-            this.Tab_Bots.Size = new System.Drawing.Size(826, 483);
+            this.Tab_Bots.Size = new System.Drawing.Size(726, 483);
             this.Tab_Bots.TabIndex = 0;
             this.Tab_Bots.Text = "Bots";
             this.Tab_Bots.UseVisualStyleBackColor = true;
@@ -106,7 +106,7 @@ namespace SysBot.Pokemon.WinForms
             this.FLP_Bots.Location = new System.Drawing.Point(0, 37);
             this.FLP_Bots.Margin = new System.Windows.Forms.Padding(0);
             this.FLP_Bots.Name = "FLP_Bots";
-            this.FLP_Bots.Size = new System.Drawing.Size(825, 443);
+            this.FLP_Bots.Size = new System.Drawing.Size(725, 443);
             this.FLP_Bots.TabIndex = 9;
             this.FLP_Bots.Resize += new System.EventHandler(this.FLP_Bots_Resize);
             // 
@@ -256,7 +256,7 @@ namespace SysBot.Pokemon.WinForms
             // B_Stop
             // 
             this.B_Stop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.B_Stop.Location = new System.Drawing.Point(720, 0);
+            this.B_Stop.Location = new System.Drawing.Point(620, 0);
             this.B_Stop.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.B_Stop.Name = "B_Stop";
             this.B_Stop.Size = new System.Drawing.Size(69, 23);
@@ -268,7 +268,7 @@ namespace SysBot.Pokemon.WinForms
             // B_Start
             // 
             this.B_Start.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.B_Start.Location = new System.Drawing.Point(644, 0);
+            this.B_Start.Location = new System.Drawing.Point(544, 0);
             this.B_Start.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.B_Start.Name = "B_Start";
             this.B_Start.Size = new System.Drawing.Size(69, 23);
@@ -281,7 +281,7 @@ namespace SysBot.Pokemon.WinForms
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(834, 511);
+            this.ClientSize = new System.Drawing.Size(734, 511);
             this.Controls.Add(this.B_Stop);
             this.Controls.Add(this.B_Start);
             this.Controls.Add(this.TC_Main);

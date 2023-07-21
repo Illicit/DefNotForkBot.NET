@@ -1,9 +1,9 @@
 ﻿using PKHeX.Core;
-using System.ComponentModel;
-using SysBot.Base;
-using System.Threading;
-using System.Collections.Generic;
 using System;
+using SysBot.Base;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Threading;
 
 namespace SysBot.Pokemon
 {
@@ -20,11 +20,26 @@ namespace SysBot.Pokemon
         [Category(Hosting), Description("Amount of raids before updating the ban list. If you want the global ban list off, set this to -1.")]
         public int RaidsBetweenUpdate { get; set; } = 3;
 
-        [Category(Hosting), Description("Raid embed description. Enter your description, species, form, and if shiny here.")]
-        public List<RaidParameters> RaidEmbedParameters { get; set; } = new();
+        [Category(Hosting), Description("When enabled, the bot will attempt to auto-generate Raid Parameters from the \"raidsv.txt\" file on botstart.")]
+        public bool GenerateParametersFromFile { get; set; } = true;
+
+        [Category(Hosting), Description("When enabled, the bot will attempt to auto-generate Raid Embeds based on the\"preset.txt\" file.")]
+        public bool UsePresetFile { get; set; } = true;
+
+        [Category(Hosting), Description("Preset Filters"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+        public RaidPresetFiltersCategory PresetFilters { get; set; } = new();
+
+        [Category(Hosting), Description("Raid Embed Filters"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+        public RaidEmbedFiltersCategory RaidEmbedFilters { get; set; } = new();
+
+        [Category(Hosting), Description("When enabled, the bot will use the superior sprite art courtesy of SHA.")]
+        public bool SpriteAlternateArt { get; set; } = true;
 
         [Category(Hosting), Description("Catch limit per player before they get added to the ban list automatically. If set to 0 this setting will be ignored.")]
         public int CatchLimit { get; set; } = 0;
+
+        [Category(Hosting), Description("Empty raid limit per parameter before the bot hosts and uncoded raid. Default is 3 raids.")]
+        public int EmptyRaidLimit { get; set; } = 3;
 
         [Category(Hosting), Description("Minimum amount of seconds to wait before starting a raid.")]
         public int TimeToWait { get; set; } = 90;
@@ -32,7 +47,10 @@ namespace SysBot.Pokemon
         [Category(Hosting), Description("Users NIDs here are Whitelisted raiders.")]
         public RemoteControlAccessList RaiderWhiteList { get; set; } = new() { AllowIfEmpty = false };
 
-        [Category(FeatureToggle), Description("If true, the bot will attempt take screenshots for the Raid Embeds. If you experience crashes often about \"Size/Parameter\" try setting this to false.")]
+        [Category(FeatureToggle), Description("When enabled, the embed will countdown the amount of seconds in \"TimeToWait\" until starting the raid.")]
+        public bool IncludeCountdown { get; set; } = false;
+
+        [Category(FeatureToggle), Description("When enabled, the bot will attempt take screenshots for the Raid Embeds. If you experience crashes often about \"Size/Parameter\" try setting this to false.")]
         public bool TakeScreenshot { get; set; } = true;
 
         [Category(Hosting), Description("Users NIDs here are banned raiders.")]
@@ -44,10 +62,16 @@ namespace SysBot.Pokemon
         [Category(FeatureToggle), Description("Set your Switch Date/Time format in the Date/Time settings. The day will automatically rollback by 1 if the Date changes.")]
         public DTFormat DateTimeFormat { get; set; } = DTFormat.MMDDYY;
 
+        [Category(Hosting), Description("When enabled, the bot will use the overshoot method to apply rollover correction, otherwise will use DDOWN clicks.")]
+        public bool UseOvershoot { get; set; } = false;
+
+        [Category(Hosting), Description("Amount of times to hit DDOWN for accessing date/time settings during rollover correction. [Default: 39 Clicks]")]
+        public int DDOWNClicks { get; set; } = 39;
+
         [Category(Hosting), Description("Time to scroll down duration in milliseconds for accessing date/time settings during rollover correction. You want to have it overshoot the Date/Time setting by 1, as it will click DUP after scrolling down. [Default: 930ms]")]
         public int HoldTimeForRollover { get; set; } = 900;
 
-        [Category(Hosting), Description("If true, start the bot when you are on the HOME screen with the game closed. The bot will only run the rollover routine so you can try to configure accurate timing.")]
+        [Category(Hosting), Description("When enabled, start the bot when you are on the HOME screen with the game closed. The bot will only run the rollover routine so you can try to configure accurate timing.")]
         public bool ConfigureRolloverCorrection { get; set; } = false;
 
         [Category(FeatureToggle), Description("When enabled, the screen will be turned off during normal bot loop operation to save power.")]
@@ -75,39 +99,58 @@ namespace SysBot.Pokemon
                 yield return $"Started Raids: {CompletedRaids}";
         }
 
-        public enum DTFormat
-        { 
-            MMDDYY,
-            DDMMYY,
-            YYMMDD,
-        }
-
-        public class RaidParameters
+        [Category(Hosting), TypeConverter(typeof(CategoryConverter<RaidEmbedFiltersCategory>))]
+        public class RaidEmbedFiltersCategory
         {
-            public override string ToString() => $"{Title}";
-            public string Title { get; set; } = string.Empty;
+            public override string ToString() => "Raid Embed Filters";
+            public TeraCrystalType CrystalType { get; set; } = TeraCrystalType.Base;
             public string[] Description { get; set; } = Array.Empty<string>();
-            public Species Species { get; set; } = Species.None;
-            public int SpeciesForm { get; set; } = 0;
-            public bool IsShiny { get; set; } = true;
             public string SpeciesIVs { get; set; } = String.Empty;
             public Nature SpeciesNature { get; set; } = Nature.Random;
             public Ability SpeciesAbility { get; set; } = Ability.Adaptability;
-            public TeraCrystalType CrystalType { get; set; } = TeraCrystalType.Base;
             public bool CodeTheRaid { get; set; } = false;
             public bool CodeInInfo { get; set; } = false;
             public bool CodeIfSplitHidden { get; set; } = false;
-            public bool SpriteAlternateArt { get; set; } = false;
-            public uint Seed { get; set; } = 0x0;
+            public bool IsSet { get; set; } = false;
+            public bool IsShiny { get; set; } = true;
             public string[] PartyPK { get; set; } = Array.Empty<string>();
+            public Species Species { get; set; } = Species.None;
+            public int SpeciesForm { get; set; } = 0;
+            public string Seed { get; set; } = "0";
+            public string Title { get; set; } = string.Empty;
         }
 
-        public enum TeraCrystalType: int
+        [Category(Hosting), TypeConverter(typeof(CategoryConverter<RaidPresetFiltersCategory>))]
+        public class RaidPresetFiltersCategory
         {
-            Base = 0,
-            Black = 1,
-            Distribution = 2,
-            Might = 3,
+            public override string ToString() => "Preset Filters";
+
+            [Category(Hosting), Description("If true, the bot will attempt to auto-generate Raid Embeds based on the \"preset.txt\" file.")]
+            public bool UsePresetFile { get; set; } = true;
+
+            [Category(Hosting), Description("If true, the bot will use the first line of preset as title.")]
+            public bool TitleFromPreset { get; set; } = true;
+
+            [Category(Hosting), Description("If true, the bot will overwrite any set Title with the new one.")]
+            public bool ForceTitle { get; set; } = true;
+
+            [Category(Hosting), Description("If true, the bot will overwrite any set Description with the new one.")]
+            public bool ForceDescription { get; set; } = true;
+
+            [Category(Hosting), Description("If true, the bot will append the moves to the preset Description.")]
+            public bool IncludeMoves { get; set; } = true;
+
+            [Category(Hosting), Description("If true, the bot will append the Special Rewards to the preset Description.")]
+            public bool IncludeRewards { get; set; } = true;
+        }
+
+        public class CategoryConverter<T> : TypeConverter
+        {
+            public override bool GetPropertiesSupported(ITypeDescriptorContext? context) => true;
+
+            public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext? context, object value, Attribute[]? attributes) => TypeDescriptor.GetProperties(typeof(T));
+
+            public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType) => destinationType != typeof(string) && base.CanConvertTo(context, destinationType);
         }
     }    
 }

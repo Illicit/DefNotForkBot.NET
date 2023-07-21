@@ -19,7 +19,7 @@ namespace SysBot.Pokemon
         public IReadOnlyList<long> ConfigPointer { get; } = new long[] { 0x44C1C18, 0x1B8, 0x40 };
         public IReadOnlyList<long> CurrentBoxPointer { get; } = new long[] { 0x44C1C18, 0x128, 0x570 };
         public IReadOnlyList<long> PortalBoxStatusPointer { get; } = new long[] { 0x44DB380, 0x18, 0xA0, 0x1B8, 0x70, 0x28 };  // 9-A in portal, 4-6 in box.
-        public IReadOnlyList<long> IsConnectedPointer { get; } = new long[] { 0x44E5120, 0x18 };
+        public IReadOnlyList<long> IsConnectedPointer { get; } = new long[] { 0x44E5140, 0x10 };
         public IReadOnlyList<long> OverworldPointer { get; } = new long[] { 0x44E5068, 0x348, 0x10, 0xD8, 0x28 };
 
         public const int BoxFormatSlotSize = 0x158;
@@ -30,10 +30,8 @@ namespace SysBot.Pokemon
         public IReadOnlyList<long> CollisionPointer { get; } = new long[] { 0x45069E0, 0x28, 0x48, 0x0, 0x08, 0x80 };
         public IReadOnlyList<long> PlayerOnMountPointer { get; } = new long[] { 0x45069E0, 0x28, 0x48, 0x0, 0x08, 0x70 };
         public IReadOnlyList<long> MobilityPointer { get; } = new long[] { 0x44E4E00, 0x60, 0x0, 0xB8, 0x20 };
-
         public IReadOnlyList<long> BlockKeyPointer = new long[] { 0x44B71A8, 0xD8, 0x0, 0x0, 0x30, 0x0 };
         public IReadOnlyList<long> TextBoxPointer { get; } = new long[] { 0x44E73B0, 0x10, 0x670, 0x6D8, 0x30 };
-        
         public uint EggData = 0x044C3348;
         public ulong TeraLobbyIsConnected { get; } = 0x04176430;
         public ulong LoadedIntoDesiredState { get; } = 0x04553020;

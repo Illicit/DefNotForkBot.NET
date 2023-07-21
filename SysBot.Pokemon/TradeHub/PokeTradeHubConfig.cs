@@ -27,6 +27,10 @@ namespace SysBot.Pokemon
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public TradeSettings Trade { get; set; } = new();
 
+        [Category(BotTrade), Description("Settings for idle distribution trades.")]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public DistributionSettings Distribution { get; set; } = new();
+
         [Category(BotTrade)]
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public TradeCordSettings TradeCord { get; set; } = new();
@@ -35,17 +39,9 @@ namespace SysBot.Pokemon
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public SeedCheckSettings SeedCheckSWSH { get; set; } = new();
 
-        [Category(BotTrade), Description("Settings for idle distribution trades.")]
-        [TypeConverter(typeof(ExpandableObjectConverter))]
-        public DistributionSettings Distribution { get; set; } = new();
-
         [Category(BotTrade)]
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public TradeAbuseSettings TradeAbuse { get; set; } = new();
-
-        [Category(BotTrade)]
-        [TypeConverter(typeof(ExpandableObjectConverter))]
-        public EtumrepDumpSettings EtumrepDump { get; set; } = new();
 
         // Encounter Bots - For finding or hosting Pokémon in-game.
 
@@ -67,7 +63,15 @@ namespace SysBot.Pokemon
 
         [Category(BotEncounter)]
         [TypeConverter(typeof(ExpandableObjectConverter))]
+        public RotatingRaidSettingsSV RotatingRaidSV { get; set; } = new();
+
+        [Category(BotEncounter)]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
         public ArceusBotSettings ArceusLA { get; set; } = new();
+
+        [Category(BotEncounter)]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public OverworldSettings OverworldSWSH { get; set; } = new();
 
         [Category(BotEncounter)]
         [TypeConverter(typeof(ExpandableObjectConverter))]
@@ -76,14 +80,6 @@ namespace SysBot.Pokemon
         [Category(BotEncounter)]
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public RaidSettings RaidSWSH { get; set; } = new();
-
-        [Category(BotEncounter)]
-        [TypeConverter(typeof(ExpandableObjectConverter))]
-        public FossilSettings FossilSWSH { get; set; } = new();
-
-        [Category(BotEncounter)]
-        [TypeConverter(typeof(ExpandableObjectConverter))]
-        public EggSettings EggSWSH { get; set; } = new();
 
         [Category(BotEncounter)]
         [TypeConverter(typeof(ExpandableObjectConverter))]
@@ -104,6 +100,10 @@ namespace SysBot.Pokemon
         [Category(BotEncounter)]
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public RollingRaidSettings RollingRaidSWSH { get; set; } = new();
+
+        [Category(BotTrade)]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public EtumrepDumpSettings EtumrepDump { get; set; } = new();
 
         // Integration
 

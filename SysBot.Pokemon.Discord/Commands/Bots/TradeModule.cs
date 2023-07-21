@@ -1,11 +1,11 @@
-﻿using System;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using PKHeX.Core;
+using SysBot.Base;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using SysBot.Base;
 
 namespace SysBot.Pokemon.Discord
 {
@@ -87,9 +87,7 @@ namespace SysBot.Pokemon.Discord
                 var sig = Context.User.GetFavor();
                 await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User).ConfigureAwait(false);
             }
-#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
             {
                 LogUtil.LogSafe(ex, nameof(TradeModule<T>));
                 var msg = $"Oops! An unexpected problem happened with this Showdown Set:\n```{string.Join("\n", set.GetSetLines())}```";
@@ -137,7 +135,7 @@ namespace SysBot.Pokemon.Discord
         [Alias("tu", "tradeOther")]
         [Summary("Makes the bot trade the mentioned user the attached file.")]
         [RequireSudo]
-        public async Task TradeAsyncAttachUser([Summary("Trade Code")] int code, [Remainder]string _)
+        public async Task TradeAsyncAttachUser([Summary("Trade Code")] int code, [Remainder] string _)
         {
             if (Context.Message.MentionedUsers.Count > 1)
             {

@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using Discord.Net;
+using Discord.WebSocket;
 using PKHeX.Core;
 using System.Threading.Tasks;
 
@@ -88,7 +88,7 @@ namespace SysBot.Pokemon.Discord
             var name = user.Username;
 
             var trainer = new PokeTradeTrainerInfo(trainerName, userID);
-            var notifier = new DiscordTradeNotifier<T>(pk, trainer, code, user);
+            var notifier = new DiscordTradeNotifier<T>(pk, trainer, code, user, context);
             var detail = new PokeTradeDetail<T>(pk, trainer, notifier, t, code, sig == RequestSignificance.Favored);
             var trade = new TradeEntry<T>(detail, userID, type, name);
 

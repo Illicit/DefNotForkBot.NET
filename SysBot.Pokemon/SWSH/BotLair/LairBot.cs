@@ -7,12 +7,12 @@ using System.Globalization;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using static SysBot.Base.SwitchButton;
-using static SysBot.Pokemon.PokeDataOffsets;
+using static SysBot.Pokemon.PokeDataOffsetsSWSH;
 
 namespace SysBot.Pokemon
 {
     // Thanks to Anubis and Zyro for providing offsets and ideas for LairBot, and Elvis for endless testing with PinkBot!
-    public sealed class LairBot : EncounterBot
+    public sealed class LairBotSWSH : EncounterBotSWSH
     {
         private StopConditionSettings NewSCSettings = new();
         private readonly LairBotSettings Settings;
@@ -63,7 +63,7 @@ namespace SysBot.Pokemon
             public ushort LairRewardsScreen { get; set; }
         }
 
-        public LairBot(PokeBotState cfg, PokeTradeHub<PK8> hub) : base(cfg, hub)
+        public LairBotSWSH(PokeBotState cfg, PokeTradeHub<PK8> hub) : base(cfg, hub)
         {
             Settings = Hub.Config.LairSWSH;
             DumpSetting = Hub.Config.Folder;
@@ -585,7 +585,7 @@ namespace SysBot.Pokemon
         private async Task<int> GetDyniteCount(CancellationToken token)
         {
             OtherItemsPouch = await Connection.ReadBytesAsync(OtherItemAddress, 2184, token).ConfigureAwait(false);
-            var pouch = new InventoryPouch8(InventoryType.Items, LairBotUtil.Pouch_Regular_SWSH, 999, 0, 546);
+            var pouch = new InventoryPouch8(InventoryType.Items, ItemStorage8SWSH.Instance, 999, 0, 546);
             pouch.GetPouch(OtherItemsPouch);
             return pouch.Items.FirstOrDefault(x => x.Index == 1604)!.Count;
         }
@@ -593,7 +593,7 @@ namespace SysBot.Pokemon
         private async Task<int> GetPokeBallCount(CancellationToken token)
         {
             BallPouch = await Connection.ReadBytesAsync(PokeBallOffset, 116, token).ConfigureAwait(false);
-            var counts = new BallPouchUtil().GetBallCounts(BallPouch);
+            var counts = BallPouchUtil.GetBallCounts(BallPouch);
             return counts.PossibleCatches((Ball)Settings.LairBall);
         }
 

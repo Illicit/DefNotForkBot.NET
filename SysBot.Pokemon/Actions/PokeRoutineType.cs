@@ -21,15 +21,17 @@
         Clone = 5,
         /// <summary> Exports files for all data shown to the bot. </summary>
         Dump = 6,
+        /// <summary> Exports files for all data shown to the bot. </summary>
+        Display = 7,
 
         /// <summary> Retrieves eggs from the Day Care. </summary>
-        EggFetch = 7,
+        EggFetch = 8,
 
         /// <summary> Revives fossils until the criteria is satisfied. </summary>
-        FossilBot = 8,
+        FossilBot = 9,
 
         /// <summary> Performs group battles as a host. </summary>
-        RaidBot = 9,
+        RaidBot = 10,
 
         /// <summary> Triggers encounters until the criteria is satisfied. </summary>
         EncounterLine = 1_000,
@@ -69,8 +71,11 @@
         /// <summary> Performs and rolls group battles as a host. </summary>
         RollingRaid = 6008,
 
+        /// <summary> Performs and rotates group battles as a host. </summary>
+        RotatingRaidBot = 6009,
+
         /// <summary> Dump trade method for permutations in Legends Arceus. </summary>
-        EtumrepDump = 6009,
+        EtumrepDump = 6010,
 
         /// <summary> Perform various ways to encounter Pokémon in Legends Arceus. </summary>
         ArceusBot = 9001,
