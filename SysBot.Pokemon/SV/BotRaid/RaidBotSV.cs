@@ -800,7 +800,7 @@ namespace SysBot.Pokemon
                 ImageUrl = bytes.Length > 0 ? "attachment://zap.jpg" : default,
             }.WithFooter(new EmbedFooterBuilder()
             {
-                Text = $"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by secludes"
+                Text = $"Raids: {WinCount + LossCount} - Wins: {WinCount} - Losses: {LossCount} // Hosted by @secludes"
             });
 
             if (disband)
