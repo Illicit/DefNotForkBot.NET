@@ -766,10 +766,11 @@ namespace SysBot.Pokemon
             // Get Code Early
             string rcode = string.Empty;
 
-            if (Settings.RaidEmbedFilters.CodeTheRaid)
-            {
-                rcode = await GetRaidCode(token).ConfigureAwait(false);
-            }
+            if (names is null && !upnext)
+                rcode = $"{(Settings.RaidEmbedFilters.CodeTheRaid && EmptyRaid < Settings.EmptyRaidLimit ? await GetRaidCode(token).ConfigureAwait(false) : "Free For All")}";
+
+            if (EmptyRaid == Settings.EmptyRaidLimit)
+                EmptyRaid = 0;
 
             // Title can only be up to 256 characters.
             var title = hatTrick && names is not null ? $"**🪄🎩✨ {names[0]} with the Hat Trick! ✨🎩🪄**" : Settings.RaidEmbedFilters.Title.Length > 0 && starting ? $"Raid {RaidCount} Starting! [{rcode}]" : Settings.RaidEmbedFilters.Title;
@@ -780,13 +781,6 @@ namespace SysBot.Pokemon
             var description = Settings.RaidEmbedFilters.Description.Length > 0 ? $"{string.Join("\n", Settings.RaidEmbedFilters.Description)}\n\n\n" : "";
             if (description.Length > 4096)
                 description = description[..4096];
-
-            
-            if (names is null && !upnext)
-                rcode = $"**{(Settings.RaidEmbedFilters.CodeTheRaid && EmptyRaid < Settings.EmptyRaidLimit ? await GetRaidCode(token).ConfigureAwait(false) : "Free For All")}**";
-
-            if (EmptyRaid == Settings.EmptyRaidLimit)
-                EmptyRaid = 0;
 
             if (disband) // Wait for trainer to load before disband
                 await Task.Delay(5_000, token).ConfigureAwait(false);
@@ -817,7 +811,7 @@ namespace SysBot.Pokemon
 
             if (!disband && names is null && !upnext && Settings.RaidEmbedFilters.CodeInInfo)
             {
-                if (Settings.RaidEmbedFilters.CodeIfSplitHidden && rcode.Length == 6)
+                if (Settings.RaidEmbedFilters.CodeIfSplitHidden && rcode.Length == 6 && rcode != "Free For All")
                 {
                     embed.AddField("**Waiting in lobby!**", $"Raid code: ||{rcode.Substring(0, rcode.Length / 2)}||᲼+᲼||{rcode.Substring(rcode.Length / 2)}||");
                 }
